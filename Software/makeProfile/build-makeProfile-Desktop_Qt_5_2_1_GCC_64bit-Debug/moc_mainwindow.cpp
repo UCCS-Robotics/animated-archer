@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_MainWindow_t {
-    QByteArrayData data[13];
-    char stringdata[312];
+    QByteArrayData data[15];
+    char stringdata[356];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -41,7 +41,9 @@ QT_MOC_LITERAL(8, 174, 28),
 QT_MOC_LITERAL(9, 203, 22),
 QT_MOC_LITERAL(10, 226, 26),
 QT_MOC_LITERAL(11, 253, 28),
-QT_MOC_LITERAL(12, 282, 28)
+QT_MOC_LITERAL(12, 282, 28),
+QT_MOC_LITERAL(13, 311, 19),
+QT_MOC_LITERAL(14, 331, 23)
     },
     "MainWindow\0on_radioSample_clicked\0\0"
     "on_radioFilter_clicked\0"
@@ -54,6 +56,7 @@ QT_MOC_LITERAL(12, 282, 28)
     "on_actionCompass_triggered\0"
     "on_actionAltimiter_triggered\0"
     "on_actionIR_Sensor_triggered\0"
+    "on_radioRaw_clicked\0on_radioConvert_clicked\0"
 };
 #undef QT_MOC_LITERAL
 
@@ -63,7 +66,7 @@ static const uint qt_meta_data_MainWindow[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      11,   14, // methods
+      13,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -71,19 +74,23 @@ static const uint qt_meta_data_MainWindow[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   69,    2, 0x08,
-       3,    0,   70,    2, 0x08,
-       4,    0,   71,    2, 0x08,
-       5,    0,   72,    2, 0x08,
-       6,    0,   73,    2, 0x08,
-       7,    0,   74,    2, 0x08,
-       8,    0,   75,    2, 0x08,
-       9,    0,   76,    2, 0x08,
-      10,    0,   77,    2, 0x08,
-      11,    0,   78,    2, 0x08,
-      12,    0,   79,    2, 0x08,
+       1,    0,   79,    2, 0x08,
+       3,    0,   80,    2, 0x08,
+       4,    0,   81,    2, 0x08,
+       5,    0,   82,    2, 0x08,
+       6,    0,   83,    2, 0x08,
+       7,    0,   84,    2, 0x08,
+       8,    0,   85,    2, 0x08,
+       9,    0,   86,    2, 0x08,
+      10,    0,   87,    2, 0x08,
+      11,    0,   88,    2, 0x08,
+      12,    0,   89,    2, 0x08,
+      13,    0,   90,    2, 0x08,
+      14,    0,   91,    2, 0x08,
 
  // slots: parameters
+    QMetaType::Void,
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -115,6 +122,8 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 8: _t->on_actionCompass_triggered(); break;
         case 9: _t->on_actionAltimiter_triggered(); break;
         case 10: _t->on_actionIR_Sensor_triggered(); break;
+        case 11: _t->on_radioRaw_clicked(); break;
+        case 12: _t->on_radioConvert_clicked(); break;
         default: ;
         }
     }
@@ -146,13 +155,13 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 11)
+        if (_id < 13)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 11;
+        _id -= 13;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 11)
+        if (_id < 13)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 11;
+        _id -= 13;
     }
     return _id;
 }

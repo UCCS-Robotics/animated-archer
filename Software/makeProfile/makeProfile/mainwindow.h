@@ -3,7 +3,14 @@
 
 #include <QMainWindow>
 #include "qcustomplot.h"
-#include "commandwindow.h"
+#define ULTRASONIC 1
+#define ACCELEROMETER 2
+#define GYROSCOPE 3
+#define THERMOMETER 4
+#define GPS 5
+#define COMPASS 6
+#define ALTIMITER 7
+#define INFRARED 8
 
 namespace Ui {
 class MainWindow;
@@ -16,6 +23,9 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+private:
+    void sensor_switched();
 
 private slots:
 
@@ -42,8 +52,13 @@ private slots:
 
     void on_actionIR_Sensor_triggered();
 
+    void on_radioRaw_clicked();
+
+    void on_radioConvert_clicked();
+
 private:
     Ui::MainWindow *ui;
+    char sensor;
 };
 
 #endif // MAINWINDOW_H

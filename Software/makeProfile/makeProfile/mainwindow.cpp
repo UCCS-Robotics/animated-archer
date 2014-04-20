@@ -13,6 +13,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->radioFilter->click();
     ui->label->hide();
     ui->label_2->hide();
+    ui->mainPlot->addGraph();
+    ui->mainPlot->yAxis->setLabel("Volts");
+    ui->mainPlot->xAxis->setLabel("Time (sec)");
 }
 
 MainWindow::~MainWindow()
@@ -62,6 +65,8 @@ void MainWindow::on_radioKalman_clicked()
 //Ultrasonic Sensor
 void MainWindow::on_actionUS_Sensor_triggered()
 {
+    sensor = ULTRASONIC;
+    sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
     ui->checkBoxData2->hide();
@@ -72,6 +77,8 @@ void MainWindow::on_actionUS_Sensor_triggered()
 
 void MainWindow::on_actionAccelerometer_triggered()
 {
+    sensor = ACCELEROMETER;
+    sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
     ui->checkBoxData2->show();
@@ -82,6 +89,8 @@ void MainWindow::on_actionAccelerometer_triggered()
 
 void MainWindow::on_actionGyroscope_triggered()
 {
+    sensor = GYROSCOPE;
+    sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
     ui->checkBoxData2->show();
@@ -92,6 +101,8 @@ void MainWindow::on_actionGyroscope_triggered()
 
 void MainWindow::on_actionGPS_triggered()
 {
+    sensor = GPS;
+    sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
     ui->checkBoxData2->show();
@@ -102,6 +113,8 @@ void MainWindow::on_actionGPS_triggered()
 
 void MainWindow::on_actionCompass_triggered()
 {
+    sensor = COMPASS;
+    sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
     ui->checkBoxData2->hide();
@@ -111,6 +124,8 @@ void MainWindow::on_actionCompass_triggered()
 }
 void MainWindow::on_actionAltimiter_triggered()
 {
+    sensor = ALTIMITER;
+    sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
     ui->checkBoxData2->hide();
@@ -121,10 +136,86 @@ void MainWindow::on_actionAltimiter_triggered()
 
 void MainWindow::on_actionIR_Sensor_triggered()
 {
+    sensor = INFRARED;
+    sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
     ui->checkBoxData2->hide();
     ui->labelRed->hide();
     ui->checkBoxData3->hide();
     ui->labelGreen->hide();
+}
+
+void MainWindow::on_radioRaw_clicked()
+{
+    switch(sensor){
+    case ULTRASONIC:
+        ui->mainPlot->yAxis->setLabel("Raw Voltage");
+        break;
+    case ACCELEROMETER:
+        ui->mainPlot->yAxis->setLabel("Reg Values");
+        break;
+    case GYROSCOPE:
+        ui->mainPlot->yAxis->setLabel("Reg Values");
+        break;
+    case GPS:
+
+        break;
+    case COMPASS:
+        ui->mainPlot->yAxis->setLabel("Reg Values");
+        break;
+    case ALTIMITER:
+        ui->mainPlot->yAxis->setLabel("Reg Values");
+        break;
+
+    case INFRARED:
+        ui->mainPlot->yAxis->setLabel("Raw PWM");
+        break;
+    default:
+        if(!ui->radioRaw->isChecked())
+            ui->radioRaw->click();
+    }
+
+    ui->mainPlot->replot();
+}
+
+void MainWindow::sensor_switched(){
+    if(ui->radioRaw->isChecked()){
+        ui->radioRaw->click();
+    } else {
+        ui->radioConvert->click();
+    }
+}
+
+void MainWindow::on_radioConvert_clicked()
+{
+    switch(sensor){
+    case ULTRASONIC:
+        ui->mainPlot->yAxis->setLabel("Distance (mm)");
+        break;
+    case ACCELEROMETER:
+        ui->mainPlot->yAxis->setLabel("Acceleration (mm/s^2)");
+        break;
+    case GYROSCOPE:
+        ui->mainPlot->yAxis->setLabel("Angular Velocity (rad/s)");
+        break;
+    case GPS:
+
+        break;
+    case COMPASS:
+        ui->mainPlot->yAxis->setLabel("Direction (rad)");
+        break;
+    case ALTIMITER:
+        ui->mainPlot->yAxis->setLabel("Altitude (m)");
+        break;
+
+    case INFRARED:
+        ui->mainPlot->yAxis->setLabel("Distance (mm)");
+        break;
+    default:
+        if(!ui->radioRaw->isChecked())
+            ui->radioRaw->click();
+    }
+
+    ui->mainPlot->replot();
 }
