@@ -329,7 +329,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QPlainTextEdit" name="plainTextEdit">
+         <widget class="QPlainTextEdit" name="plainTextOutput">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -346,13 +346,6 @@
      </layout>
     </item>
    </layout>
-   <zorder>horizontalSpacer</zorder>
-   <zorder>verticalSpacer_3</zorder>
-   <zorder>groupBox_2</zorder>
-   <zorder>groupBox_2</zorder>
-   <zorder>labelBlue</zorder>
-   <zorder>labelRed</zorder>
-   <zorder>labelGreen</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -377,11 +370,27 @@
    </widget>
    <widget class="QMenu" name="menuInterface_2">
     <property name="title">
-     <string>Info</string>
+     <string>Device</string>
     </property>
+    <addaction name="actionConnect_Device"/>
+    <addaction name="actionDisconnect_Device"/>
+    <addaction name="actionOpen_Command_Window_2"/>
+   </widget>
+   <widget class="QMenu" name="menuFusion">
+    <property name="title">
+     <string>Fusion</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuDocument">
+    <property name="title">
+     <string>Document</string>
+    </property>
+    <addaction name="actionWrite_to_PDF"/>
    </widget>
    <addaction name="menuInterface"/>
    <addaction name="menuInterface_2"/>
+   <addaction name="menuFusion"/>
+   <addaction name="menuDocument"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -440,6 +449,26 @@
   <action name="actionOpen_Output_Window">
    <property name="text">
     <string>Open Output Window</string>
+   </property>
+  </action>
+  <action name="actionConnect_Device">
+   <property name="text">
+    <string>Connect Device</string>
+   </property>
+  </action>
+  <action name="actionDisconnect_Device">
+   <property name="text">
+    <string>Disconnect Device</string>
+   </property>
+  </action>
+  <action name="actionWrite_to_PDF">
+   <property name="text">
+    <string>Write to PDF</string>
+   </property>
+  </action>
+  <action name="actionOpen_Command_Window_2">
+   <property name="text">
+    <string>Open Command Window</string>
    </property>
   </action>
  </widget>

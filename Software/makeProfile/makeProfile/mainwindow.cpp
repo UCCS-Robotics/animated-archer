@@ -14,13 +14,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->label->hide();
     ui->label_2->hide();
     ui->mainPlot->addGraph();
-    ui->mainPlot->yAxis->setLabel("Volts");
-    ui->mainPlot->xAxis->setLabel("Time (sec)");
+    QWidget::setWindowTitle("Live Data");
+    usb = new Device;
+    plot();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete usb;
 }
 
 void MainWindow::on_radioSample_clicked()
@@ -150,7 +152,7 @@ void MainWindow::on_radioRaw_clicked()
 {
     switch(sensor){
     case ULTRASONIC:
-        ui->mainPlot->yAxis->setLabel("Raw Voltage");
+        ui->mainPlot->yAxis->setLabel("ADC Voltage");
         break;
     case ACCELEROMETER:
         ui->mainPlot->yAxis->setLabel("Reg Values");
@@ -218,4 +220,25 @@ void MainWindow::on_radioConvert_clicked()
     }
 
     ui->mainPlot->replot();
+}
+
+void MainWindow::plot(){
+    QCPBars *myBars = new QCPBars(ui->mainPlot->xAxis, ui->mainPlot->yAxis);
+    ui->mainPlot->addPlottable(myBars);
+    // now we can modify properties of myBars:
+    myBars->setName("Pretty bars");
+    QVector<double> keyData;
+    QVector<double> valueData;
+    keyData << 1 << 2 << 3;
+    valueData << 2 << 4 << 8;
+    myBars->setData(keyData, valueData);
+    ui->mainPlot->rescaleAxes();
+    ui->mainPlot->replot();
+    ui->mainPlot->setInteraction(QCP::iSelectPlottables, true);
+}
+
+void MainWindow::on_actionConnect_Device_triggered()
+{
+    usb->open();
+    usb->identify();
 }

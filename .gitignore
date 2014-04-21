@@ -14,5 +14,6 @@
 
 #Qt
 *.pro.user
+build-makeProfile-Desktop_Qt_5_2_1_GCC_64bit-Debug/
 # Stupid Shit
 desktop.ini

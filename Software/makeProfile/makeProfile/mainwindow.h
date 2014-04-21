@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include "qcustomplot.h"
+#include "device.h"
+
 #define ULTRASONIC 1
 #define ACCELEROMETER 2
 #define GYROSCOPE 3
@@ -26,6 +28,7 @@ public:
 
 private:
     void sensor_switched();
+    void plot();
 
 private slots:
 
@@ -56,9 +59,12 @@ private slots:
 
     void on_radioConvert_clicked();
 
+    void on_actionConnect_Device_triggered();
+
 private:
     Ui::MainWindow *ui;
     char sensor;
+    Device *usb;
 };
 
 #endif // MAINWINDOW_H
