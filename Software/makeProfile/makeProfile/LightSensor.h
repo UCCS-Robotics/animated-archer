@@ -20,7 +20,7 @@ private slots:
 
 signals:
 //    void sendStringMain(const QString &);
-    void sentLightSensorData(uint16_t);
+    void sentLightSensorData(quint16);
 
 private:
 	void enable();

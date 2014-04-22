@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QTimer>
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -20,21 +20,25 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(processOneThing()));
 
-    lightsensor = new LightSensor;
-    connect(lightsensor,SIGNAL(sentLightSensorData(uint16_t)),this,SLOT(processLightSensorData(uint16_t)));
-    connect(timer, SIGNAL(timeout()), lightsensor, SLOT(updateSensor()));
+    lightsensor = new SensorThread(this);
+    lightsensor->start();
     timer->start(1000);
     time = 0;
     ui->mainPlot->addGraph();
     ui->mainPlot->graph(0)->setPen(QPen(Qt::blue)); // line color blue for first graph
     connect(ui->mainPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->xAxis2, SLOT(setRange(QCPRange)));
     connect(ui->mainPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->yAxis2, SLOT(setRange(QCPRange)));
+    currentTime = new QDateTime;
+    ui->mainPlot->xAxis->setDateTimeFormat("mm:ss:zzz");
+    *currentTime = QDateTime::currentDateTime();
+    ui->mainPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
     delete usb;
+    delete currentTime;
 }
 
 void MainWindow::on_radioSample_clicked()
@@ -234,14 +238,16 @@ void MainWindow::on_radioConvert_clicked()
     ui->mainPlot->replot();
 }
 
-void MainWindow::processLightSensorData(uint16_t data){
-    ui->mainPlot->graph(1)->addData(QVector<double>() << time++, QVector<double>() << data);
+void MainWindow::processLightSensorData(quint16 data){
+    qint64 elapsedTime = QDateTime::currentDateTime().toMSecsSinceEpoch() - currentTime->toMSecsSinceEpoch();
+
+    ui->mainPlot->graph(1)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data);
     ui->mainPlot->graph(1)->selectedPen().isSolid();
     ui->mainPlot->graph(1)->rescaleAxes();
     // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
     ui->mainPlot->graph(1)->rescaleAxes(true);
     ui->mainPlot->replot();
-    ui->plainTextOutput->insertPlainText(QString::number(time) + " " + QString::number(data)+"\n");
+    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data)+"\n");
     ui->plainTextOutput->ensureCursorVisible();
 }
 

@@ -18,14 +18,16 @@ SOURCES += main.cpp\
     device.cpp \
     i2c.cpp \
     lcd.cpp \
-    LightSensor.cpp
+    LightSensor.cpp \
+    sensorthread.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
     device.h \
     i2c.h \
     lcd.h \
-    LightSensor.h
+    LightSensor.h \
+    sensorthread.h
 
 FORMS    += mainwindow.ui \
     device.ui

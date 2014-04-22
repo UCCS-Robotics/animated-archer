@@ -2,9 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTimer>
+#include <QDateTime>
 #include "qcustomplot.h"
 #include "device.h"
-#include "LightSensor.h"
+#include "sensorthread.h"
 
 #define ULTRASONIC 1
 #define ACCELEROMETER 2
@@ -67,15 +69,16 @@ private slots:
     void processOneThing();
 
 //    void processLightSensorString(const QString &);
-    void processLightSensorData(uint16_t);
+    void processLightSensorData(quint16);
 
 private:
     Ui::MainWindow *ui;
     char sensor;
     Device *usb;
     QTimer *timer;
-    LightSensor *lightsensor;
+    SensorThread *lightsensor;
     int time;
+    QDateTime *currentTime;
 };
 
 #endif // MAINWINDOW_H
