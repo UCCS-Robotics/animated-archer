@@ -15,11 +15,17 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     qcustomplot.cpp \
-    device.cpp
+    device.cpp \
+    i2c.cpp \
+    lcd.cpp \
+    LightSensor.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
-    device.h
+    device.h \
+    i2c.h \
+    lcd.h \
+    LightSensor.h
 
 FORMS    += mainwindow.ui \
     device.ui

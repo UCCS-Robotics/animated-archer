@@ -50,6 +50,10 @@ public:
     QAction *actionIR_Sensor;
     QAction *actionOpen_Command_Window;
     QAction *actionOpen_Output_Window;
+    QAction *actionConnect_Device;
+    QAction *actionDisconnect_Device;
+    QAction *actionWrite_to_PDF;
+    QAction *actionOpen_Command_Window_2;
     QWidget *centralWidget;
     QGridLayout *gridLayout_3;
     QGridLayout *gridLayout_2;
@@ -93,10 +97,12 @@ public:
     QHBoxLayout *horizontalLayout_4;
     QCheckBox *checkBoxData3;
     QLabel *labelGreen;
-    QPlainTextEdit *plainTextEdit;
+    QPlainTextEdit *plainTextOutput;
     QMenuBar *menuBar;
     QMenu *menuInterface;
     QMenu *menuInterface_2;
+    QMenu *menuFusion;
+    QMenu *menuDocument;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
 
@@ -125,6 +131,14 @@ public:
         actionOpen_Command_Window->setObjectName(QStringLiteral("actionOpen_Command_Window"));
         actionOpen_Output_Window = new QAction(MainWindow);
         actionOpen_Output_Window->setObjectName(QStringLiteral("actionOpen_Output_Window"));
+        actionConnect_Device = new QAction(MainWindow);
+        actionConnect_Device->setObjectName(QStringLiteral("actionConnect_Device"));
+        actionDisconnect_Device = new QAction(MainWindow);
+        actionDisconnect_Device->setObjectName(QStringLiteral("actionDisconnect_Device"));
+        actionWrite_to_PDF = new QAction(MainWindow);
+        actionWrite_to_PDF->setObjectName(QStringLiteral("actionWrite_to_PDF"));
+        actionOpen_Command_Window_2 = new QAction(MainWindow);
+        actionOpen_Command_Window_2->setObjectName(QStringLiteral("actionOpen_Command_Window_2"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         gridLayout_3 = new QGridLayout(centralWidget);
@@ -353,16 +367,16 @@ public:
 
         verticalLayout_5->addLayout(verticalLayout_4);
 
-        plainTextEdit = new QPlainTextEdit(centralWidget);
-        plainTextEdit->setObjectName(QStringLiteral("plainTextEdit"));
+        plainTextOutput = new QPlainTextEdit(centralWidget);
+        plainTextOutput->setObjectName(QStringLiteral("plainTextOutput"));
         QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
-        sizePolicy.setHeightForWidth(plainTextEdit->sizePolicy().hasHeightForWidth());
-        plainTextEdit->setSizePolicy(sizePolicy);
-        plainTextEdit->setReadOnly(true);
+        sizePolicy.setHeightForWidth(plainTextOutput->sizePolicy().hasHeightForWidth());
+        plainTextOutput->setSizePolicy(sizePolicy);
+        plainTextOutput->setReadOnly(true);
 
-        verticalLayout_5->addWidget(plainTextEdit);
+        verticalLayout_5->addWidget(plainTextOutput);
 
 
         gridLayout_2->addLayout(verticalLayout_5, 0, 1, 1, 1);
@@ -371,11 +385,6 @@ public:
         gridLayout_3->addLayout(gridLayout_2, 0, 0, 1, 1);
 
         MainWindow->setCentralWidget(centralWidget);
-        groupBox_2->raise();
-        groupBox_2->raise();
-        labelBlue->raise();
-        labelRed->raise();
-        labelGreen->raise();
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
         menuBar->setGeometry(QRect(0, 0, 857, 25));
@@ -383,6 +392,10 @@ public:
         menuInterface->setObjectName(QStringLiteral("menuInterface"));
         menuInterface_2 = new QMenu(menuBar);
         menuInterface_2->setObjectName(QStringLiteral("menuInterface_2"));
+        menuFusion = new QMenu(menuBar);
+        menuFusion->setObjectName(QStringLiteral("menuFusion"));
+        menuDocument = new QMenu(menuBar);
+        menuDocument->setObjectName(QStringLiteral("menuDocument"));
         MainWindow->setMenuBar(menuBar);
         mainToolBar = new QToolBar(MainWindow);
         mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
@@ -393,6 +406,8 @@ public:
 
         menuBar->addAction(menuInterface->menuAction());
         menuBar->addAction(menuInterface_2->menuAction());
+        menuBar->addAction(menuFusion->menuAction());
+        menuBar->addAction(menuDocument->menuAction());
         menuInterface->addAction(actionUS_Sensor);
         menuInterface->addAction(actionAccelerometer);
         menuInterface->addAction(actionGyroscope);
@@ -400,6 +415,10 @@ public:
         menuInterface->addAction(actionCompass);
         menuInterface->addAction(actionAltimiter);
         menuInterface->addAction(actionIR_Sensor);
+        menuInterface_2->addAction(actionConnect_Device);
+        menuInterface_2->addAction(actionDisconnect_Device);
+        menuInterface_2->addAction(actionOpen_Command_Window_2);
+        menuDocument->addAction(actionWrite_to_PDF);
 
         retranslateUi(MainWindow);
 
@@ -419,6 +438,10 @@ public:
         actionIR_Sensor->setText(QApplication::translate("MainWindow", "IR Sensor", 0));
         actionOpen_Command_Window->setText(QApplication::translate("MainWindow", "Open Command Window", 0));
         actionOpen_Output_Window->setText(QApplication::translate("MainWindow", "Open Output Window", 0));
+        actionConnect_Device->setText(QApplication::translate("MainWindow", "Connect Device", 0));
+        actionDisconnect_Device->setText(QApplication::translate("MainWindow", "Disconnect Device", 0));
+        actionWrite_to_PDF->setText(QApplication::translate("MainWindow", "Write to PDF", 0));
+        actionOpen_Command_Window_2->setText(QApplication::translate("MainWindow", "Open Command Window", 0));
         label->setText(QApplication::translate("MainWindow", "# samples", 0));
         label_2->setText(QApplication::translate("MainWindow", "Sample Delay", 0));
         pushButtonPauseResume->setText(QApplication::translate("MainWindow", "Pause/Resume", 0));
@@ -439,7 +462,9 @@ public:
         checkBoxData3->setText(QApplication::translate("MainWindow", "Axis 3", 0));
         labelGreen->setText(QApplication::translate("MainWindow", "(Green)", 0));
         menuInterface->setTitle(QApplication::translate("MainWindow", "Sensor", 0));
-        menuInterface_2->setTitle(QApplication::translate("MainWindow", "Info", 0));
+        menuInterface_2->setTitle(QApplication::translate("MainWindow", "Device", 0));
+        menuFusion->setTitle(QApplication::translate("MainWindow", "Fusion", 0));
+        menuDocument->setTitle(QApplication::translate("MainWindow", "Document", 0));
     } // retranslateUi
 
 };

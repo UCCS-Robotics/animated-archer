@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -13,10 +13,22 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->radioFilter->click();
     ui->label->hide();
     ui->label_2->hide();
-    ui->mainPlot->addGraph();
     QWidget::setWindowTitle("Live Data");
     usb = new Device;
     plot();
+    //connect(usb,SIGNAL(updateChart(double),this,SLOT(on_updateChart(double)));
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(processOneThing()));
+
+    lightsensor = new LightSensor;
+    connect(lightsensor,SIGNAL(sentLightSensorData(uint16_t)),this,SLOT(processLightSensorData(uint16_t)));
+    connect(timer, SIGNAL(timeout()), lightsensor, SLOT(updateSensor()));
+    timer->start(1000);
+    time = 0;
+    ui->mainPlot->addGraph();
+    ui->mainPlot->graph(0)->setPen(QPen(Qt::blue)); // line color blue for first graph
+    connect(ui->mainPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->xAxis2, SLOT(setRange(QCPRange)));
+    connect(ui->mainPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->yAxis2, SLOT(setRange(QCPRange)));
 }
 
 MainWindow::~MainWindow()
@@ -222,23 +234,62 @@ void MainWindow::on_radioConvert_clicked()
     ui->mainPlot->replot();
 }
 
-void MainWindow::plot(){
-    QCPBars *myBars = new QCPBars(ui->mainPlot->xAxis, ui->mainPlot->yAxis);
-    ui->mainPlot->addPlottable(myBars);
-    // now we can modify properties of myBars:
-    myBars->setName("Pretty bars");
-    QVector<double> keyData;
-    QVector<double> valueData;
-    keyData << 1 << 2 << 3;
-    valueData << 2 << 4 << 8;
-    myBars->setData(keyData, valueData);
-    ui->mainPlot->rescaleAxes();
+void MainWindow::processLightSensorData(uint16_t data){
+    ui->mainPlot->graph(1)->addData(QVector<double>() << time++, QVector<double>() << data);
+    ui->mainPlot->graph(1)->selectedPen().isSolid();
+    ui->mainPlot->graph(1)->rescaleAxes();
+    // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
+    ui->mainPlot->graph(1)->rescaleAxes(true);
     ui->mainPlot->replot();
-    ui->mainPlot->setInteraction(QCP::iSelectPlottables, true);
+    ui->plainTextOutput->insertPlainText(QString::number(time) + " " + QString::number(data)+"\n");
+    ui->plainTextOutput->ensureCursorVisible();
+}
+
+void MainWindow::plot(){
+    // add two new graphs and set their look:
+    ui->mainPlot->addGraph();
+    ui->mainPlot->graph(0)->setPen(QPen(Qt::blue)); // line color blue for first graph
+
+//    ui->mainPlot->graph(0)->addData(QVector<double>() << 1, QVector<double>() << 1);
+
+    ui->mainPlot->addGraph();
+    ui->mainPlot->graph(1)->setPen(QPen(Qt::red)); // line color red for second graph
+    // configure right and top axis to show ticks but no labels:
+    // (see QCPAxisRect::setupFullAxesBox for a quicker method to do this)
+    ui->mainPlot->xAxis2->setVisible(true);
+    ui->mainPlot->xAxis2->setTickLabels(false);
+    ui->mainPlot->yAxis2->setVisible(true);
+    ui->mainPlot->yAxis2->setTickLabels(false);
+    // make left and bottom axes always transfer their ranges to right and top axes:
+    connect(ui->mainPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->xAxis2, SLOT(setRange(QCPRange)));
+    connect(ui->mainPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->yAxis2, SLOT(setRange(QCPRange)));
+
+//    ui->mainPlot->graph(0)->addData(QVector<double>() << 1, QVector<double>() << 1);
+    // let the ranges scale themselves so graph 0 fits perfectly in the visible area:
+    ui->mainPlot->graph(0)->rescaleAxes();
+    // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
+    ui->mainPlot->graph(1)->rescaleAxes(true);
+    // Note: we could have also just called ui->mainPlot->rescaleAxes(); instead
+    // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
+    ui->mainPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 }
 
 void MainWindow::on_actionConnect_Device_triggered()
 {
-    usb->open();
-    usb->identify();
+    lcdSendCommand(LCD_CLEAR);
 }
+
+void MainWindow::on_updateChart(double value){
+
+}
+
+void MainWindow::processOneThing(){
+//    time += 1;
+//    ui->plainTextOutput->insertPlainText(QString::number(time)+"\n");
+//    usb->write_LCD(QString::number(time));
+}
+
+//void MainWindow::processLightSensorString(const QString &stringer){
+//    ui->plainTextOutput->insertPlainText(stringer);
+//    ui->plainTextOutput->ensureCursorVisible();
+//}

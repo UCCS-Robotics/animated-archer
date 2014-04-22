@@ -2,7 +2,10 @@
 #define DEVICE_H
 
 #include <QDialog>
-#include<libusb-1.0/libusb.h>
+#include "lcd.h"
+
+#define CONVERT 0
+#define RAW 1
 
 namespace Ui {
 class Device;
@@ -15,12 +18,19 @@ class Device : public QDialog
 public:
     explicit Device(QWidget *parent = 0);
     ~Device();
-    int identify();
+    void write_LCD(QString);
 private:
-    void printdev(libusb_device *dev);
+
+signals:
+    void finishedRead(char);
+
+private slots:
+    void on_write(QString);
+    void on_read();
 
 private:
     Ui::Device *ui;
+    bool convertState;
 };
 
 #endif // DEVICE_H

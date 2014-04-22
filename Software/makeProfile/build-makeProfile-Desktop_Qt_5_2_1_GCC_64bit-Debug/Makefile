@@ -18,7 +18,7 @@ CXXFLAGS      = -pipe -g -Wall -W -D_REENTRANT -fPIE $(DEFINES)
 INCPATH       = -I/opt/Qt/5.2.1/gcc_64/mkspecs/linux-g++ -I../makeProfile -I/opt/Qt/5.2.1/gcc_64/include -I/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport -I/opt/Qt/5.2.1/gcc_64/include/QtWidgets -I/opt/Qt/5.2.1/gcc_64/include/QtGui -I/opt/Qt/5.2.1/gcc_64/include/QtCore -I. -I. -I.
 LINK          = g++
 LFLAGS        = -Wl,-rpath,/opt/Qt/5.2.1/gcc_64 -Wl,-rpath,/opt/Qt/5.2.1/gcc_64/lib
-LIBS          = $(SUBLIBS) -L/opt/Qt/5.2.1/gcc_64/lib -lQt5PrintSupport -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread 
+LIBS          = $(SUBLIBS) -lusb-1.0 -L/opt/Qt/5.2.1/gcc_64/lib -lQt5PrintSupport -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread 
 AR            = ar cqs
 RANLIB        = 
 QMAKE         = /opt/Qt/5.2.1/gcc_64/bin/qmake
@@ -47,13 +47,25 @@ OBJECTS_DIR   = ./
 
 SOURCES       = ../makeProfile/main.cpp \
 		../makeProfile/mainwindow.cpp \
-		../makeProfile/qcustomplot.cpp moc_mainwindow.cpp \
-		moc_qcustomplot.cpp
+		../makeProfile/qcustomplot.cpp \
+		../makeProfile/device.cpp \
+		../makeProfile/i2c.cpp \
+		../makeProfile/lcd.cpp \
+		../makeProfile/LightSensor.cpp moc_mainwindow.cpp \
+		moc_qcustomplot.cpp \
+		moc_device.cpp \
+		moc_LightSensor.cpp
 OBJECTS       = main.o \
 		mainwindow.o \
 		qcustomplot.o \
+		device.o \
+		i2c.o \
+		lcd.o \
+		LightSensor.o \
 		moc_mainwindow.o \
-		moc_qcustomplot.o
+		moc_qcustomplot.o \
+		moc_device.o \
+		moc_LightSensor.o
 DIST          = /opt/Qt/5.2.1/gcc_64/mkspecs/features/spec_pre.prf \
 		/opt/Qt/5.2.1/gcc_64/mkspecs/common/shell-unix.conf \
 		/opt/Qt/5.2.1/gcc_64/mkspecs/common/unix.conf \
@@ -187,7 +199,7 @@ first: all
 
 all: Makefile $(TARGET)
 
-$(TARGET): ui_mainwindow.h $(OBJECTS)  
+$(TARGET): ui_mainwindow.h ui_device.h $(OBJECTS)  
 	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(OBJCOMP) $(LIBS)
 	{ test -n "$(DESTDIR)" && DESTDIR="$(DESTDIR)" || DESTDIR=.; } && test $$(gdb --version | sed -e 's,[^0-9][^0-9]*\([0-9]\)\.\([0-9]\).*,\1\2,;q') -gt 72 && gdb --nx --batch --quiet -ex 'set confirm off' -ex "save gdb-index $$DESTDIR" -ex quit '$(TARGET)' && test -f $(TARGET).gdb-index && objcopy --add-section '.gdb_index=$(TARGET).gdb-index' --set-section-flags '.gdb_index=readonly' '$(TARGET)' '$(TARGET)' && rm -f $(TARGET).gdb-index || true
 
@@ -413,7 +425,7 @@ qmake_all: FORCE
 
 dist: 
 	@test -d .tmp/makeProfile1.0.0 || mkdir -p .tmp/makeProfile1.0.0
-	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/makeProfile1.0.0/ && $(COPY_FILE) --parents ../makeProfile/mainwindow.h ../makeProfile/qcustomplot.h .tmp/makeProfile1.0.0/ && $(COPY_FILE) --parents ../makeProfile/main.cpp ../makeProfile/mainwindow.cpp ../makeProfile/qcustomplot.cpp .tmp/makeProfile1.0.0/ && $(COPY_FILE) --parents ../makeProfile/mainwindow.ui .tmp/makeProfile1.0.0/ && (cd `dirname .tmp/makeProfile1.0.0` && $(TAR) makeProfile1.0.0.tar makeProfile1.0.0 && $(COMPRESS) makeProfile1.0.0.tar) && $(MOVE) `dirname .tmp/makeProfile1.0.0`/makeProfile1.0.0.tar.gz . && $(DEL_FILE) -r .tmp/makeProfile1.0.0
+	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/makeProfile1.0.0/ && $(COPY_FILE) --parents ../makeProfile/mainwindow.h ../makeProfile/qcustomplot.h ../makeProfile/device.h ../makeProfile/i2c.h ../makeProfile/lcd.h ../makeProfile/LightSensor.h .tmp/makeProfile1.0.0/ && $(COPY_FILE) --parents ../makeProfile/main.cpp ../makeProfile/mainwindow.cpp ../makeProfile/qcustomplot.cpp ../makeProfile/device.cpp ../makeProfile/i2c.cpp ../makeProfile/lcd.cpp ../makeProfile/LightSensor.cpp .tmp/makeProfile1.0.0/ && $(COPY_FILE) --parents ../makeProfile/mainwindow.ui ../makeProfile/device.ui .tmp/makeProfile1.0.0/ && (cd `dirname .tmp/makeProfile1.0.0` && $(TAR) makeProfile1.0.0.tar makeProfile1.0.0 && $(COMPRESS) makeProfile1.0.0.tar) && $(MOVE) `dirname .tmp/makeProfile1.0.0`/makeProfile1.0.0.tar.gz . && $(DEL_FILE) -r .tmp/makeProfile1.0.0
 
 
 clean:compiler_clean 
@@ -436,9 +448,9 @@ check: first
 
 compiler_rcc_make_all:
 compiler_rcc_clean:
-compiler_moc_header_make_all: moc_mainwindow.cpp moc_qcustomplot.cpp
+compiler_moc_header_make_all: moc_mainwindow.cpp moc_qcustomplot.cpp moc_device.cpp moc_LightSensor.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_mainwindow.cpp moc_qcustomplot.cpp
+	-$(DEL_FILE) moc_mainwindow.cpp moc_qcustomplot.cpp moc_device.cpp moc_LightSensor.cpp
 moc_mainwindow.cpp: /opt/Qt/5.2.1/gcc_64/include/QtWidgets/QMainWindow \
 		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qmainwindow.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qwidget.h \
@@ -908,6 +920,9 @@ moc_mainwindow.cpp: /opt/Qt/5.2.1/gcc_64/include/QtWidgets/QMainWindow \
 		/opt/Qt/5.2.1/gcc_64/include/QtCore/QPair \
 		/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport/qprintpreviewwidget.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport/qtprintsupportversion.h \
+		../makeProfile/device.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QDialog \
+		../makeProfile/lcd.h \
 		../makeProfile/mainwindow.h
 	/opt/Qt/5.2.1/gcc_64/bin/moc $(DEFINES) $(INCPATH) ../makeProfile/mainwindow.h -o moc_mainwindow.cpp
 
@@ -1381,11 +1396,187 @@ moc_qcustomplot.cpp: /opt/Qt/5.2.1/gcc_64/include/QtCore/QObject \
 		../makeProfile/qcustomplot.h
 	/opt/Qt/5.2.1/gcc_64/bin/moc $(DEFINES) $(INCPATH) ../makeProfile/qcustomplot.h -o moc_qcustomplot.cpp
 
+moc_device.cpp: /opt/Qt/5.2.1/gcc_64/include/QtWidgets/QDialog \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qdialog.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qwidget.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qwindowdefs.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobal.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qconfig.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfeatures.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsystemdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qprocessordetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcompilerdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobalstatic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qgenericatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_msvc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_integrity.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qoldbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_vxworks.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_power.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_alpha.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv7.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv6.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv5.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bfin.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_ia64.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_mips.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_s390.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sh4a.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sparc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_x86.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_cxx11.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_gcc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_unix.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmutex.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlogging.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qflags.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypeinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypetraits.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsysinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qnamespace.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qwindowdefs_win.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstring.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qchar.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbytearray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qrefcount.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qarraydata.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstringbuilder.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlist.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qalgorithms.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qiterator.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcoreevent.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qscopedpointer.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmetatype.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qvarlengtharray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcontainerfwd.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qisenum.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmargins.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qrect.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsize.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qpoint.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpaintdevice.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpalette.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qcolor.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qrgb.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstringlist.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qdatastream.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qiodevice.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qpair.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qregexp.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstringmatcher.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qbrush.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qvector.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qmatrix.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpolygon.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qregion.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qline.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qtransform.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpainterpath.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qimage.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpixmap.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsharedpointer.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qshareddata.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsharedpointer_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qhash.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qfont.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qfontmetrics.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qfontinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qsizepolicy.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qcursor.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qkeysequence.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qevent.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qvariant.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmap.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qdebug.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtextstream.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlocale.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qset.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcontiguouscache.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qurl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qurlquery.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfile.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfiledevice.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qvector2d.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qtouchdevice.h \
+		../makeProfile/lcd.h \
+		../makeProfile/device.h
+	/opt/Qt/5.2.1/gcc_64/bin/moc $(DEFINES) $(INCPATH) ../makeProfile/device.h -o moc_device.cpp
+
+moc_LightSensor.cpp: /opt/Qt/5.2.1/gcc_64/include/QtCore/QObject \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qnamespace.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobal.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qconfig.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfeatures.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsystemdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qprocessordetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcompilerdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobalstatic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qgenericatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_msvc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_integrity.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qoldbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_vxworks.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_power.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_alpha.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv7.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv6.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv5.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bfin.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_ia64.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_mips.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_s390.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sh4a.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sparc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_x86.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_cxx11.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_gcc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_unix.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmutex.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlogging.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qflags.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypeinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypetraits.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsysinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstring.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qchar.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbytearray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qrefcount.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qarraydata.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstringbuilder.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlist.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qalgorithms.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qiterator.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcoreevent.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qscopedpointer.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmetatype.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qvarlengtharray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcontainerfwd.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qisenum.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/QTimer \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtimer.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbasictimer.h \
+		../makeProfile/LightSensor.h
+	/opt/Qt/5.2.1/gcc_64/bin/moc $(DEFINES) $(INCPATH) ../makeProfile/LightSensor.h -o moc_LightSensor.cpp
+
 compiler_moc_source_make_all:
 compiler_moc_source_clean:
-compiler_uic_make_all: ui_mainwindow.h
+compiler_uic_make_all: ui_mainwindow.h ui_device.h
 compiler_uic_clean:
-	-$(DEL_FILE) ui_mainwindow.h
+	-$(DEL_FILE) ui_mainwindow.h ui_device.h
 ui_mainwindow.h: ../makeProfile/mainwindow.ui \
 		../makeProfile/qcustomplot.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtCore/QObject \
@@ -1856,6 +2047,9 @@ ui_mainwindow.h: ../makeProfile/mainwindow.ui \
 		/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport/qprintpreviewwidget.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport/qtprintsupportversion.h
 	/opt/Qt/5.2.1/gcc_64/bin/uic ../makeProfile/mainwindow.ui -o ui_mainwindow.h
+
+ui_device.h: ../makeProfile/device.ui
+	/opt/Qt/5.2.1/gcc_64/bin/uic ../makeProfile/device.ui -o ui_device.h
 
 compiler_yacc_decl_make_all:
 compiler_yacc_decl_clean:
@@ -2337,6 +2531,9 @@ main.o: ../makeProfile/main.cpp ../makeProfile/mainwindow.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtCore/QPair \
 		/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport/qprintpreviewwidget.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport/qtprintsupportversion.h \
+		../makeProfile/device.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QDialog \
+		../makeProfile/lcd.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QApplication
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../makeProfile/main.cpp
 
@@ -2810,6 +3007,9 @@ mainwindow.o: ../makeProfile/mainwindow.cpp ../makeProfile/mainwindow.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtCore/QPair \
 		/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport/qprintpreviewwidget.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport/qtprintsupportversion.h \
+		../makeProfile/device.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QDialog \
+		../makeProfile/lcd.h \
 		ui_mainwindow.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QAction \
 		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QApplication \
@@ -2831,7 +3031,8 @@ mainwindow.o: ../makeProfile/mainwindow.cpp ../makeProfile/mainwindow.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QSpinBox \
 		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QStatusBar \
 		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QToolBar \
-		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QVBoxLayout
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QVBoxLayout \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/QTimer
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../makeProfile/mainwindow.cpp
 
 qcustomplot.o: ../makeProfile/qcustomplot.cpp ../makeProfile/qcustomplot.h \
@@ -3304,11 +3505,318 @@ qcustomplot.o: ../makeProfile/qcustomplot.cpp ../makeProfile/qcustomplot.h \
 		/opt/Qt/5.2.1/gcc_64/include/QtPrintSupport/qtprintsupportversion.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qcustomplot.o ../makeProfile/qcustomplot.cpp
 
+device.o: ../makeProfile/device.cpp ../makeProfile/device.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QDialog \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qdialog.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qwidget.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qwindowdefs.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobal.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qconfig.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfeatures.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsystemdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qprocessordetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcompilerdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobalstatic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qgenericatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_msvc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_integrity.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qoldbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_vxworks.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_power.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_alpha.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv7.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv6.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv5.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bfin.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_ia64.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_mips.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_s390.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sh4a.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sparc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_x86.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_cxx11.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_gcc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_unix.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmutex.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlogging.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qflags.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypeinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypetraits.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsysinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qnamespace.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qwindowdefs_win.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstring.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qchar.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbytearray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qrefcount.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qarraydata.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstringbuilder.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlist.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qalgorithms.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qiterator.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcoreevent.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qscopedpointer.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmetatype.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qvarlengtharray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcontainerfwd.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qisenum.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmargins.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qrect.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsize.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qpoint.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpaintdevice.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpalette.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qcolor.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qrgb.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstringlist.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qdatastream.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qiodevice.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qpair.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qregexp.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstringmatcher.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qbrush.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qvector.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qmatrix.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpolygon.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qregion.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qline.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qtransform.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpainterpath.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qimage.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpixmap.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsharedpointer.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qshareddata.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsharedpointer_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qhash.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qfont.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qfontmetrics.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qfontinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qsizepolicy.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qcursor.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qkeysequence.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qevent.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qvariant.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmap.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qdebug.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtextstream.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlocale.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qset.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcontiguouscache.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qurl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qurlquery.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfile.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfiledevice.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qvector2d.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qtouchdevice.h \
+		../makeProfile/lcd.h \
+		ui_device.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/QVariant \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QAction \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qaction.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qicon.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qactiongroup.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QApplication \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qapplication.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcoreapplication.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qeventloop.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qguiapplication.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qinputmethod.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QButtonGroup \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qbuttongroup.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QGridLayout \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qgridlayout.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qlayout.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qlayoutitem.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qboxlayout.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QHBoxLayout \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QHeaderView \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qheaderview.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qabstractitemview.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qframe.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qabstractitemmodel.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qitemselectionmodel.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qstyleoption.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qvalidator.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qregularexpression.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qslider.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qabstractslider.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qstyle.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qtabbar.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qtabwidget.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qrubberband.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QPlainTextEdit \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qplaintextedit.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qtextedit.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qtextdocument.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qtextoption.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qtextcursor.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qtextformat.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qpen.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qabstracttextdocumentlayout.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qtextlayout.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qglyphrun.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qrawfont.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtGui/qfontdatabase.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QPushButton \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qpushbutton.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/qabstractbutton.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QSpacerItem \
+		/opt/Qt/5.2.1/gcc_64/include/QtWidgets/QVBoxLayout
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o device.o ../makeProfile/device.cpp
+
+i2c.o: ../makeProfile/i2c.cpp ../makeProfile/i2c.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/QFile \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfile.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfiledevice.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qiodevice.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobal.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qconfig.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfeatures.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsystemdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qprocessordetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcompilerdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobalstatic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qgenericatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_msvc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_integrity.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qoldbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_vxworks.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_power.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_alpha.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv7.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv6.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv5.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bfin.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_ia64.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_mips.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_s390.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sh4a.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sparc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_x86.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_cxx11.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_gcc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_unix.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmutex.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlogging.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qflags.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypeinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypetraits.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsysinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qnamespace.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstring.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qchar.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbytearray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qrefcount.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qarraydata.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstringbuilder.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlist.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qalgorithms.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qiterator.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcoreevent.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qscopedpointer.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmetatype.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qvarlengtharray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcontainerfwd.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qisenum.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject_impl.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o i2c.o ../makeProfile/i2c.cpp
+
+lcd.o: ../makeProfile/lcd.cpp ../makeProfile/lcd.h \
+		../makeProfile/i2c.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o lcd.o ../makeProfile/lcd.cpp
+
+LightSensor.o: ../makeProfile/LightSensor.cpp ../makeProfile/LightSensor.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/QObject \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qnamespace.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobal.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qconfig.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qfeatures.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsystemdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qprocessordetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcompilerdetection.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qglobalstatic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qgenericatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_msvc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_integrity.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qoldbasicatomic.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_vxworks.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_power.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_alpha.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv7.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv6.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_armv5.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_bfin.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_ia64.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_mips.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_s390.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sh4a.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_sparc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_x86.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_cxx11.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_gcc.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qatomic_unix.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmutex.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlogging.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qflags.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypeinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtypetraits.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qsysinfo.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstring.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qchar.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbytearray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qrefcount.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qarraydata.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qstringbuilder.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qlist.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qalgorithms.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qiterator.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcoreevent.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qscopedpointer.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qmetatype.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qvarlengtharray.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qcontainerfwd.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qisenum.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qobject_impl.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/QTimer \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qtimer.h \
+		/opt/Qt/5.2.1/gcc_64/include/QtCore/qbasictimer.h \
+		../makeProfile/i2c.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o LightSensor.o ../makeProfile/LightSensor.cpp
+
 moc_mainwindow.o: moc_mainwindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_mainwindow.o moc_mainwindow.cpp
 
 moc_qcustomplot.o: moc_qcustomplot.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_qcustomplot.o moc_qcustomplot.cpp
+
+moc_device.o: moc_device.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_device.o moc_device.cpp
+
+moc_LightSensor.o: moc_LightSensor.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_LightSensor.o moc_LightSensor.cpp
 
 ####### Install
 

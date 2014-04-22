@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include "qcustomplot.h"
 #include "device.h"
+#include "LightSensor.h"
 
 #define ULTRASONIC 1
 #define ACCELEROMETER 2
@@ -61,10 +62,20 @@ private slots:
 
     void on_actionConnect_Device_triggered();
 
+    void on_updateChart(double);
+
+    void processOneThing();
+
+//    void processLightSensorString(const QString &);
+    void processLightSensorData(uint16_t);
+
 private:
     Ui::MainWindow *ui;
     char sensor;
     Device *usb;
+    QTimer *timer;
+    LightSensor *lightsensor;
+    int time;
 };
 
 #endif // MAINWINDOW_H
