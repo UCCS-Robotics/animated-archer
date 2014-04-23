@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	Sensor sensor;
 
 	lcdSendCommand(LCD_CLEAR);
-	lcdSendString("Test text!!!");
+    lcdSendString("I haz da power!");
 
 	return app.exec();
 }
