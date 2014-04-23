@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     *currentTime = QDateTime::currentDateTime();
 
 //    connect(this, SIGNAL(pauseResume(bool)),lightsensor,SLOT(on_pauseResume(bool)));
+    usb->write_LCD("Initialized.");
 
     plot();
 }
