@@ -15,3 +15,15 @@ void SensorThread::run(){
     connect(timer, SIGNAL(timeout()), lightsensor, SLOT(updateSensor()));
     exec();
 }
+
+void SensorThread::on_pauseResume(bool pauseResume){
+    if(pauseResume){
+        if(!timer->isActive()){
+            timer->start(500);
+        }
+    } else {
+        if(timer->isActive()){
+            timer->stop();
+        }
+    }
+}

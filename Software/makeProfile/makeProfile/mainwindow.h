@@ -33,6 +33,8 @@ private:
     void sensor_switched();
     void plot();
 
+signals:
+
 private slots:
 
 
@@ -64,8 +66,9 @@ private slots:
 
     void on_actionConnect_Device_triggered();
 
-//    void processLightSensorString(const QString &);
     void processLightSensorData(quint16);
+
+    void on_pushButtonPauseResume_clicked(bool checked);
 
 private:
     Ui::MainWindow *ui;
@@ -75,6 +78,7 @@ private:
     SensorThread *lightsensor;
     int time;
     QDateTime *currentTime;
+    QVector <double> lsg0;
 };
 
 #endif // MAINWINDOW_H

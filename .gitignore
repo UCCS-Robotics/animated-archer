@@ -15,5 +15,6 @@
 #Qt
 *.pro.user
 build-makeProfile-Desktop_Qt_5_2_1_GCC_64bit-Debug/
+usb_i2c
 # Stupid Shit
 desktop.ini
