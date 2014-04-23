@@ -13,25 +13,24 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->radioFilter->click();
     ui->label->hide();
     ui->label_2->hide();
-    QWidget::setWindowTitle("Live Data");
-    usb = new Device;
-    plot();
-    //connect(usb,SIGNAL(updateChart(double),this,SLOT(on_updateChart(double)));
-    timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(processOneThing()));
 
+    QWidget::setWindowTitle("Live Data");
+
+    usb = new Device;
+    timer = new QTimer(this);
     lightsensor = new SensorThread(this);
+    currentTime = new QDateTime;
+
     lightsensor->start();
     timer->start(1000);
-    time = 0;
-    ui->mainPlot->addGraph();
-    ui->mainPlot->graph(0)->setPen(QPen(Qt::blue)); // line color blue for first graph
+
+    *currentTime = QDateTime::currentDateTime();
+
     connect(ui->mainPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->xAxis2, SLOT(setRange(QCPRange)));
     connect(ui->mainPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->yAxis2, SLOT(setRange(QCPRange)));
-    currentTime = new QDateTime;
-    ui->mainPlot->xAxis->setDateTimeFormat("mm:ss:zzz");
-    *currentTime = QDateTime::currentDateTime();
-    ui->mainPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
+    //connect(timer, SIGNAL(timeout()), this, SLOT(processOneThing()));
+
+    plot();
 }
 
 MainWindow::~MainWindow()
@@ -243,9 +242,12 @@ void MainWindow::processLightSensorData(quint16 data){
 
     ui->mainPlot->graph(1)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data);
     ui->mainPlot->graph(1)->selectedPen().isSolid();
+//    ui->mainPlot->graph(1)->set
     ui->mainPlot->graph(1)->rescaleAxes();
     // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
     ui->mainPlot->graph(1)->rescaleAxes(true);
+//    customPlot->xAxis->setRange(-1, 1);
+//    customPlot->yAxis->setRange(0, 1);
     ui->mainPlot->replot();
     ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data)+"\n");
     ui->plainTextOutput->ensureCursorVisible();
@@ -255,9 +257,6 @@ void MainWindow::plot(){
     // add two new graphs and set their look:
     ui->mainPlot->addGraph();
     ui->mainPlot->graph(0)->setPen(QPen(Qt::blue)); // line color blue for first graph
-
-//    ui->mainPlot->graph(0)->addData(QVector<double>() << 1, QVector<double>() << 1);
-
     ui->mainPlot->addGraph();
     ui->mainPlot->graph(1)->setPen(QPen(Qt::red)); // line color red for second graph
     // configure right and top axis to show ticks but no labels:
@@ -278,24 +277,11 @@ void MainWindow::plot(){
     // Note: we could have also just called ui->mainPlot->rescaleAxes(); instead
     // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
     ui->mainPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+    ui->mainPlot->xAxis->setDateTimeFormat("mm:ss:zzz");
+    ui->mainPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
 }
 
 void MainWindow::on_actionConnect_Device_triggered()
 {
     lcdSendCommand(LCD_CLEAR);
 }
-
-void MainWindow::on_updateChart(double value){
-
-}
-
-void MainWindow::processOneThing(){
-//    time += 1;
-//    ui->plainTextOutput->insertPlainText(QString::number(time)+"\n");
-//    usb->write_LCD(QString::number(time));
-}
-
-//void MainWindow::processLightSensorString(const QString &stringer){
-//    ui->plainTextOutput->insertPlainText(stringer);
-//    ui->plainTextOutput->ensureCursorVisible();
-//}

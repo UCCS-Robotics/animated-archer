@@ -64,10 +64,6 @@ private slots:
 
     void on_actionConnect_Device_triggered();
 
-    void on_updateChart(double);
-
-    void processOneThing();
-
 //    void processLightSensorString(const QString &);
     void processLightSensorData(quint16);
 
