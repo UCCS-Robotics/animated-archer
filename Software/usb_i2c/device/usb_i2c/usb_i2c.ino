@@ -48,6 +48,9 @@ uint32_t crc32(const void *data, uint32_t sz);
 
 void setup()
 {
+  // Enable the CRC module clock.
+  SIM_SCGC6 |= SIM_SCGC6_CRC;
+
   // Initialize the I2C module.
   Wire.begin();
 }
@@ -55,11 +58,14 @@ void setup()
 // Time until the next info packet should send.
 elapsedMillis msUntilNextInfoPacket;
 
+// Counter for the info packet.
+uint32_t infoCounter = 0;
+
+// Where to store the current packet.
+byte buffer[PACKET_SIZE];
+
 void sendInfoPacket()
 {
-  // Buffer for the info packet.
-  byte buffer[PACKET_SIZE];
-
   // Cast the buffer to a packet.
   Packet *p = (Packet*)buffer;
   
@@ -71,13 +77,16 @@ void sendInfoPacket()
   p->tag = FIRMWARE_VER;
   p->reserved2 = 0;
 
+  // Counter to increment as we send info packets.
+  *((uint32_t*)(p->data)) = infoCounter++;
+
   // Zero the data.
-  for(uint8_t i = 0; i < 48; i++)
+  for(uint8_t i = 4; i < 48; i++)
     p->data[i] = 0;
     
   // Calculate the CRC-32 checksum.
   p->crc = crc32(buffer, PACKET_SIZE - 4);
-  
+
   // Transmit the packet and hope to hell it goes through.
   RawHID.send(buffer, SEND_TIMEOUT);
 }
@@ -153,9 +162,6 @@ void loop()
     msUntilNextInfoPacket -= INFO_PACKET_DELAY;
     sendInfoPacket();
   }
-
-  // Where to store the current packet.
-  byte buffer[PACKET_SIZE];
 
   // Don't wait (no timeout) and ignore any fails to read a full packet.
   if(RawHID.recv(buffer, 0) != PACKET_SIZE)
