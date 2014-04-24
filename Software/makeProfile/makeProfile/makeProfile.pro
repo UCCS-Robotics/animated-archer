@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     i2c.cpp \
     lcd.cpp \
     LightSensor.cpp \
-    sensorthread.cpp
+    sensorthread.cpp \
+    accelsensor.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
@@ -27,7 +28,8 @@ HEADERS  += mainwindow.h \
     i2c.h \
     lcd.h \
     LightSensor.h \
-    sensorthread.h
+    sensorthread.h \
+    accelsensor.h
 
 FORMS    += mainwindow.ui \
     device.ui

@@ -12,7 +12,8 @@ void SensorThread::run(){
     timer = new QTimer;
     timer->start(500);
     connect(lightsensor,SIGNAL(sentLightSensorData(quint16)),mainwindow,SLOT(processLightSensorData(quint16)));
-    connect(timer, SIGNAL(timeout()), lightsensor, SLOT(updateSensor()));
+    //connect(timer, SIGNAL(timeout()), lightsensor, SLOT(updateSensor()));
+    connect(mainwindow,SIGNAL(send_timer()),lightsensor,SLOT(updateSensor()));
     exec();
 }
 

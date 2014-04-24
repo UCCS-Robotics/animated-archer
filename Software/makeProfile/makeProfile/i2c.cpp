@@ -9,7 +9,7 @@ void i2cWrite(uint8_t addr, const uint8_t *data, uint8_t sz)
 {
 	uint8_t cmd = I2C_CMD_WRITE;
 
-    QFile tty("/dev/serial/by-id/usb-Teensyduino_USB_Serial_26767-if00");
+    QFile tty("/dev/ttyACM0");
 	tty.open(QIODevice::ReadWrite);
 	tty.write((char*)&cmd, 1);
 	tty.write((char*)&addr, 1);
@@ -28,7 +28,7 @@ void i2cRead(uint8_t addr, uint8_t *data, uint8_t sz)
 	bool ok = false;
 	uint8_t cmd = I2C_CMD_READ;
 
-    QFile tty("/dev/serial/by-id/usb-Teensyduino_USB_Serial_26767-if00");
+    QFile tty("/dev/ttyACM0");
 	tty.open(QIODevice::ReadWrite);
 	tty.write((char*)&cmd, 1);
 	tty.write((char*)&addr, 1);

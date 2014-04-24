@@ -34,9 +34,9 @@ private:
     void plot();
 
 signals:
+    void send_timer();
 
 private slots:
-
 
     void on_radioSample_clicked();
 
@@ -70,6 +70,12 @@ private slots:
 
     void on_pushButtonPauseResume_clicked(bool checked);
 
+    void on_timerExpire();
+
+    void on_checkBox_clicked(bool checked);
+
+    void on_horizontalSliderScale_valueChanged(int value);
+
 private:
     Ui::MainWindow *ui;
     char sensor;
@@ -77,8 +83,10 @@ private:
     QTimer *timer;
     SensorThread *lightsensor;
     int time;
-    QDateTime *currentTime;
+    QDateTime currentTime;
     QVector <double> lsg0;
+    qint64 elapsedTime, pauseTime;
+    bool timerStopped, autoScale;
 };
 
 #endif // MAINWINDOW_H

@@ -19,14 +19,16 @@ MainWindow::MainWindow(QWidget *parent) :
     usb = new Device;
     timer = new QTimer(this);
     lightsensor = new SensorThread(this);
-    currentTime = new QDateTime;
 
     lightsensor->start();
     timer->start(1000);
 
-    *currentTime = QDateTime::currentDateTime();
+    autoScale = 1;
+
+    currentTime = QDateTime::currentDateTime();
 
 //    connect(this, SIGNAL(pauseResume(bool)),lightsensor,SLOT(on_pauseResume(bool)));
+    connect(timer, SIGNAL(timeout()),this,SLOT(on_timerExpire()));
     usb->write_LCD("Initialized.");
 
     plot();
@@ -36,7 +38,6 @@ MainWindow::~MainWindow()
 {
     delete ui;
     delete usb;
-    delete currentTime;
 }
 
 void MainWindow::on_radioSample_clicked()
@@ -237,22 +238,27 @@ void MainWindow::on_radioConvert_clicked()
 }
 
 void MainWindow::processLightSensorData(quint16 data){
-    qint64 elapsedTime = QDateTime::currentDateTime().toMSecsSinceEpoch() - currentTime->toMSecsSinceEpoch();
+    qint64 elapsedTime = QDateTime::currentDateTime().toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
 
-    lsg0.push_back(data);
-    if(lsg0.size()==20){
-        lsg0.removeFirst();
-    }
-    QVector<double>::iterator it = std::max_element(lsg0.begin(), lsg0.end());
-    QVector<double>::iterator it2 = std::min_element(lsg0.begin(), lsg0.end());
     ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data);
     ui->mainPlot->graph(0)->selectedPen().isSolid();
-    ui->mainPlot->graph(0)->rescaleAxes();
-    // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
-//    ui->mainPlot->graph(0)->rescaleAxes(true);
+
+    lsg0.push_back(data);
+    if(lsg0.size()==13){
+        lsg0.removeFirst();
+    }
     if(elapsedTime/1000.0 > 10)
         ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - 10, elapsedTime/1000.0);
-    ui->mainPlot->yAxis->setRange(*it2-0.1*(*it-*it2)/2, *it+0.1*(*it-*it2)/2);
+    if(autoScale){
+        ui->mainPlot->graph(0)->rescaleAxes();
+        QVector<double>::iterator it = std::max_element(lsg0.begin(), lsg0.end());
+        QVector<double>::iterator it2 = std::min_element(lsg0.begin(), lsg0.end());
+        ui->mainPlot->yAxis->setRange(*it2-0.1*(*it-*it2)/2, *it+0.1*(*it-*it2)/2);
+    }
+
+    // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
+//    ui->mainPlot->graph(0)->rescaleAxes(true);
+
     ui->mainPlot->replot();
     ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data)+"\n");
     ui->plainTextOutput->ensureCursorVisible();
@@ -262,6 +268,8 @@ void MainWindow::plot(){
     // add two new graphs and set their look:
     ui->mainPlot->addGraph();
     ui->mainPlot->graph(0)->setPen(QPen(Qt::blue)); // line color blue for first graph
+    ui->mainPlot->graph(0)->setScatterStyle(ui->mainPlot->graph(0)->scatterStyle().ssCircle);
+
     // configure right and top axis to show ticks but no labels:
     // (see QCPAxisRect::setupFullAxesBox for a quicker method to do this)
     ui->mainPlot->xAxis2->setVisible(true);
@@ -289,5 +297,25 @@ void MainWindow::on_actionConnect_Device_triggered()
 
 void MainWindow::on_pushButtonPauseResume_clicked(bool checked)
 {
-    //emit pauseResume(checked);
+    if(checked){
+        timer->stop();
+    } else {
+        timer->start();
+
+    }
+}
+
+void MainWindow::on_timerExpire(){
+    emit send_timer();
+}
+
+void MainWindow::on_checkBox_clicked(bool checked)
+{
+    autoScale = checked;
+}
+
+void MainWindow::on_horizontalSliderScale_valueChanged(int value)
+{
+    ui->mainPlot->yAxis->setScaleRatio(ui->mainPlot->xAxis,value*5);
+    ui->mainPlot->replot();
 }
