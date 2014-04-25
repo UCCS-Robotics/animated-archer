@@ -1,4 +1,5 @@
 #include "LightSensor.h"
+#include "deviceconnection.h"
 
 #include <unistd.h>
 #include <iostream>
@@ -70,6 +71,13 @@ LightSensor::LightSensor(QObject *p) : QObject(p), mIR(0), mFull(0), mDidInit(fa
 {
     connect(&mDevice, SIGNAL(transactionComplete(DeviceTransactionPtr)),
         this, SLOT(transactionComplete(DeviceTransactionPtr)));
+    connect(mDevice.connection(), SIGNAL(disconnected()), this, SLOT(disconnected()));
+}
+
+void LightSensor::disconnected()
+{
+    // Make sure we init again when the device comes back.
+    mDidInit = false;
 }
 
 void LightSensor::updateSensor()
