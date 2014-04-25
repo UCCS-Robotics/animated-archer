@@ -19,6 +19,7 @@ public:
 
 private slots:
 	void updateSensor();
+    void disconnected();
     void transactionComplete(const DeviceTransactionPtr& trans);
 
 signals:
