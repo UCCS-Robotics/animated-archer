@@ -1,7 +1,7 @@
 #include "LightSensor.h"
-#include "i2c.h"
 
 #include <unistd.h>
+#include <iostream>
 
 #define	I2C_0  (0x40) // I2C Remote 8-bit I/O
 #define	I2C_1  (0x42) // Expander addresses
@@ -66,54 +66,86 @@ typedef enum
 }
 tsl2561Gain_t;
 
-LightSensor::LightSensor(QObject *p) : QObject(p)
+LightSensor::LightSensor(QObject *p) : QObject(p), mIR(0), mFull(0), mDidInit(false)
 {
-    // Initialize the light LightSensor.
-	i2cWriteSingle(TSL2561_ADDR_FLOAT, TSL2561_REGISTER_ID);
-
-//	if(i2cReadSingle(TSL2561_ADDR_FLOAT) & 0x0A)
-//        emit sendStringMain("Found TSL2561\n");
-//	else
-//        emit sendStringMain("Missing TSL2561\n");
-
-	// Set timing and gain.
-	enable();
-	write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
-		TSL2561_INTEGRATIONTIME_101MS | TSL2561_GAIN_16X);
-	disable();
+    connect(&mDevice, SIGNAL(transactionComplete(DeviceTransactionPtr)),
+        this, SLOT(transactionComplete(DeviceTransactionPtr)));
 }
 
 void LightSensor::updateSensor()
 {
+    if(!mDidInit)
+    {
+        mDidInit = true;
+
+        uint8_t cmd = TSL2561_REGISTER_ID;
+        // Initialize the light LightSensor.
+        mDevice.startWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&cmd, 1), "light");
+
+        // Set timing and gain.
+        enable();
+        write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
+            TSL2561_INTEGRATIONTIME_101MS | TSL2561_GAIN_16X);
+        disable();
+    }
+
+    if(!mDevice.isConnected())
+        return;
+
     enable();
-//	usleep(1000*102);
-	uint16_t ir = read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
-		TSL2561_REGISTER_CHAN1_LOW);
-	uint16_t full = read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
-		TSL2561_REGISTER_CHAN0_LOW);
+    usleep(1000*102);
+    read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
+        TSL2561_REGISTER_CHAN1_LOW, "light:ir");
+    read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
+        TSL2561_REGISTER_CHAN0_LOW, "light:full");
     disable();
-
-	uint16_t visible = full - ir;
-
-//    emit sendStringMain(tr("Light: %1\n").arg(visible));
-    emit sentLightSensorData(visible);
 
 	//i2cWriteSingle(SEG_LEFT >> 1, i2cReadSingle(SWITCH >> 1));
 	//i2cWriteSingle(SEG_RIGHT >> 1, i2cReadSingle(SWITCH >> 1));
 }
 
-uint16_t LightSensor::read16(uint8_t reg)
+void LightSensor::transactionComplete(const DeviceTransactionPtr& trans)
 {
-	uint16_t x;
-	i2cWriteSingle(TSL2561_ADDR_FLOAT, reg);
-	i2cRead(TSL2561_ADDR_FLOAT, (uint8_t*)&x, 2);
-	return x;
+    if(trans->type() == DeviceTransaction::Transaction_Read && trans->userData().toString() == "light:ir")
+    {
+        if(trans->readData().size() == 2)
+        {
+            mIR = *((uint16_t*)trans->readData().constData());
+            //std::cout << "IR light data found: " << trans->id() << std::endl;
+        }
+        else
+            std::cerr << "Bad IR light data." << std::endl;
+    }
+
+    if(trans->type() == DeviceTransaction::Transaction_Read && trans->userData().toString() == "light:full")
+    {
+        if(trans->readData().size() == 2)
+        {
+            mFull = *((uint16_t*)trans->readData().constData());
+            //std::cout << "Full light data found: " << trans->id() << std::endl;
+
+            uint16_t visible = mFull - mIR;
+
+            //emit sendStringMain(tr("Light: %1\n").arg(visible));
+            emit sentLightSensorData(visible);
+        }
+        else
+        {
+            std::cerr << "Bad full light data." << std::endl;
+        }
+    }
+}
+
+void LightSensor::read16(uint8_t reg, const QString& userData)
+{
+    mDevice.startWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg, 1), "light");
+    mDevice.startRead(TSL2561_ADDR_FLOAT, 2, userData);
 }
 
 void LightSensor::write8(uint8_t reg, uint8_t value)
 {
-	uint8_t data[2] = { reg, value };
-	i2cWrite(TSL2561_ADDR_FLOAT, data, 2);
+    uint8_t data[2] = { reg, value };
+    mDevice.startWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)data, 2), "light");
 }
 
 void LightSensor::enable()
@@ -124,6 +156,8 @@ void LightSensor::enable()
 
 void LightSensor::disable()
 {
+    /*
 	write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
 		TSL2561_CONTROL_POWEROFF);
+    */
 }
