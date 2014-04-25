@@ -32,6 +32,7 @@ public:
 private:
     void sensor_switched();
     void plot();
+    void set_xscreen();
 
 signals:
     void send_timer();
@@ -72,9 +73,13 @@ private slots:
 
     void on_timerExpire();
 
-    void on_checkBox_clicked(bool checked);
-
     void on_horizontalSliderScale_valueChanged(int value);
+
+    void on_checkBoxAutoScale_clicked(bool checked);
+
+    void on_horizontalSliderTScale_valueChanged(int value);
+
+    void on_horizontalSliderSpeed_valueChanged(int value);
 
 private:
     Ui::MainWindow *ui;
@@ -84,7 +89,7 @@ private:
     SensorThread *lightsensor;
     int time;
     QDateTime currentTime;
-    QVector <double> lsg0;
+    QVector <double> lsg0, globalData;
     qint64 elapsedTime, pauseTime;
     bool timerStopped, autoScale;
 };

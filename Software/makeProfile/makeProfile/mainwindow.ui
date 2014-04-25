@@ -202,7 +202,7 @@
             </widget>
            </item>
            <item row="4" column="0">
-            <widget class="QCheckBox" name="checkBox">
+            <widget class="QCheckBox" name="checkBoxAutoScale">
              <property name="text">
               <string>Auto Scale</string>
              </property>
@@ -457,52 +457,11 @@
             </layout>
            </item>
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_9">
-             <item>
-              <widget class="QLabel" name="label_5">
-               <property name="text">
-                <string>Live Time Range</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignBottom|Qt::AlignHCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_8">
-               <item>
-                <widget class="QSlider" name="horizontalSliderTime">
-                 <property name="maximumSize">
-                  <size>
-                   <width>182</width>
-                   <height>24</height>
-                  </size>
-                 </property>
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLCDNumber" name="lcdNumberTime">
-                 <property name="maximumSize">
-                  <size>
-                   <width>64</width>
-                   <height>24</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-            </layout>
-           </item>
-           <item>
             <layout class="QVBoxLayout" name="verticalLayout_7">
              <item>
               <widget class="QLabel" name="label_4">
                <property name="text">
-                <string>Sample Speed</string>
+                <string>Sample Speed (ms)</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignBottom|Qt::AlignHCenter</set>
@@ -719,18 +678,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>horizontalSliderSpeed</sender>
+   <sender>horizontalSliderTScale</sender>
    <signal>valueChanged(int)</signal>
-   <receiver>lcdNumberSpeed</receiver>
+   <receiver>lcdNumberTScale</receiver>
    <slot>display(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>648</x>
-     <y>347</y>
+     <x>649</x>
+     <y>384</y>
     </hint>
     <hint type="destinationlabel">
-     <x>787</x>
-     <y>347</y>
+     <x>789</x>
+     <y>384</y>
     </hint>
    </hints>
   </connection>
