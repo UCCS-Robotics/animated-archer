@@ -20,24 +20,26 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this);
     lightsensor = new SensorThread(this);
 
-    lightsensor->start();
-    timer->start(1000);
-
-    autoScale = 1;
-
+    autoScale = true;
     currentTime = QDateTime::currentDateTime();
+    ui->horizontalSliderTScale->setValue(10);
+    ui->horizontalSliderSpeed->setRange(1,100);
+    ui->horizontalSliderSpeed->setValue(100);
 
-//    connect(this, SIGNAL(pauseResume(bool)),lightsensor,SLOT(on_pauseResume(bool)));
     connect(timer, SIGNAL(timeout()),this,SLOT(on_timerExpire()));
     connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));
 
     plot();
+    lightsensor->start();
+    timer->start(1000);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
     delete usb;
+    delete timer;
+    delete lightsensor;
 }
 
 void MainWindow::on_radioSample_clicked()
@@ -238,26 +240,14 @@ void MainWindow::on_radioConvert_clicked()
 }
 
 void MainWindow::processLightSensorData(quint16 data){
-    qint64 elapsedTime = QDateTime::currentDateTime().toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
-
+    elapsedTime = QDateTime::currentDateTime().toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    globalData.push_back(data);
     ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data);
-    ui->mainPlot->graph(0)->selectedPen().isSolid();
 
-    lsg0.push_back(data);
-    if(lsg0.size()==13){
-        lsg0.removeFirst();
-    }
-    if(elapsedTime/1000.0 > 10)
-        ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - 10, elapsedTime/1000.0);
-    if(autoScale){
-        ui->mainPlot->graph(0)->rescaleAxes();
-        QVector<double>::iterator it = std::max_element(lsg0.begin(), lsg0.end());
-        QVector<double>::iterator it2 = std::min_element(lsg0.begin(), lsg0.end());
-        ui->mainPlot->yAxis->setRange(*it2-0.1*(*it-*it2)/2, *it+0.1*(*it-*it2)/2);
-    }
+    set_xscreen();
 
     // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
-//    ui->mainPlot->graph(0)->rescaleAxes(true);
+    //    ui->mainPlot->graph(0)->rescaleAxes(true);
 
     ui->mainPlot->replot();
     ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data)+"\n");
@@ -286,7 +276,7 @@ void MainWindow::plot(){
     connect(ui->mainPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->xAxis2, SLOT(setRange(QCPRange)));
     connect(ui->mainPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->yAxis2, SLOT(setRange(QCPRange)));
 
-//    ui->mainPlot->graph(0)->addData(QVector<double>() << 1, QVector<double>() << 1);
+    //    ui->mainPlot->graph(0)->addData(QVector<double>() << 1, QVector<double>() << 1);
     // let the ranges scale themselves so graph 0 fits perfectly in the visible area:
     ui->mainPlot->graph(0)->rescaleAxes();
     // Note: we could have also just called ui->mainPlot->rescaleAxes(); instead
@@ -315,13 +305,47 @@ void MainWindow::on_timerExpire(){
     emit send_timer();
 }
 
-void MainWindow::on_checkBox_clicked(bool checked)
-{
-    autoScale = checked;
-}
-
 void MainWindow::on_horizontalSliderScale_valueChanged(int value)
 {
     ui->mainPlot->yAxis->setScaleRatio(ui->mainPlot->xAxis,value*5);
     ui->mainPlot->replot();
+}
+
+void MainWindow::on_checkBoxAutoScale_clicked(bool checked)
+{
+    autoScale = checked;
+}
+
+void MainWindow::set_xscreen(){
+    // Set xAxis scale data
+    if(globalData.size()-ui->horizontalSliderTScale->value() > 0){
+        lsg0.resize(ui->horizontalSliderTScale->value());
+        for(int i = globalData.size()-ui->horizontalSliderTScale->value() - 1; i < lsg0.size(); i++){
+            lsg0[i] = globalData.at(i);
+        }
+    }
+    ui->mainPlot->rescaleAxes();
+    if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
+        ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0+1);
+//    ui->mainPlot->xAxis->setAutoTickStep(false);
+//    ui->mainPlot->xAxis->setTickStep(1);
+    if(autoScale){
+        QVector<double>::iterator it = std::max_element(lsg0.begin(), lsg0.end());
+        QVector<double>::iterator it2 = std::min_element(lsg0.begin(), lsg0.end());
+        ui->mainPlot->yAxis->setRange(*it2-0.1*(*it-*it2)/2, *it+0.1*(*it-*it2)/2);
+    }
+}
+
+void MainWindow::on_horizontalSliderTScale_valueChanged(int value)
+{
+    set_xscreen();
+    ui->mainPlot->xAxis->setScaleRatio(ui->mainPlot->yAxis,value);
+    ui->mainPlot->replot();
+}
+
+void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
+{
+    ui->lcdNumberSpeed->display(value*10);
+    timer->stop();
+    timer->start(value*10);
 }
