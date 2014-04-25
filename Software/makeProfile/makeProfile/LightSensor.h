@@ -1,6 +1,8 @@
 #ifndef __LightSensor_h__
 #define __LightSensor_h__
 
+#include "device.h"
+
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 
@@ -17,6 +19,7 @@ public:
 
 private slots:
 	void updateSensor();
+    void transactionComplete(const DeviceTransactionPtr& trans);
 
 signals:
 //    void sendStringMain(const QString &);
@@ -26,9 +29,13 @@ private:
 	void enable();
 	void disable();
 
-	uint16_t read16(uint8_t reg);
+    void read16(uint8_t reg, const QString& userData);
 	void write8(uint8_t reg, uint8_t value);
 
+    uint16_t mIR, mFull;
+    bool mDidInit;
+
+    Device mDevice;
 	QTextEdit *mEditor;
 	QTimer mTimer;
 };

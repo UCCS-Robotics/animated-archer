@@ -67,6 +67,7 @@ private slots:
     void on_actionConnect_Device_triggered();
 
     void processLightSensorData(quint16);
+    void on_deviceError(const QString& msg);
 
     void on_pushButtonPauseResume_clicked(bool checked);
 

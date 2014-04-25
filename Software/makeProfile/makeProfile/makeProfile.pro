@@ -10,28 +10,32 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
 TARGET = makeProfile
 TEMPLATE = app
+LIBS += -lusb
 
 
 SOURCES += main.cpp\
         mainwindow.cpp \
     qcustomplot.cpp \
     device.cpp \
-    i2c.cpp \
-    lcd.cpp \
     LightSensor.cpp \
     sensorthread.cpp \
-    accelsensor.cpp
+    deviceconnection.cpp \
+    hid.c \
+    crc32.c \
+    devicethread.cpp \
+    devicetransaction.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
     device.h \
-    i2c.h \
-    lcd.h \
     LightSensor.h \
     sensorthread.h \
-    accelsensor.h
+    deviceconnection.h \
+    hid.h \
+    crc32.h \
+    devicethread.h \
+    devicetransaction.h
 
-FORMS    += mainwindow.ui \
-    device.ui
+FORMS    += mainwindow.ui
 
 LIBS += -lusb-1.0

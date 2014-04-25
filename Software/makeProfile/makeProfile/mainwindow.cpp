@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //    connect(this, SIGNAL(pauseResume(bool)),lightsensor,SLOT(on_pauseResume(bool)));
     connect(timer, SIGNAL(timeout()),this,SLOT(on_timerExpire()));
-    usb->write_LCD("Initialized.");
+    connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));
 
     plot();
 }
@@ -264,6 +264,12 @@ void MainWindow::processLightSensorData(quint16 data){
     ui->plainTextOutput->ensureCursorVisible();
 }
 
+void MainWindow::on_deviceError(const QString& msg)
+{
+    ui->plainTextOutput->insertPlainText(tr("Device error: %1\n").arg(msg));
+    ui->plainTextOutput->ensureCursorVisible();
+}
+
 void MainWindow::plot(){
     // add two new graphs and set their look:
     ui->mainPlot->addGraph();
@@ -292,7 +298,7 @@ void MainWindow::plot(){
 
 void MainWindow::on_actionConnect_Device_triggered()
 {
-    lcdSendCommand(LCD_CLEAR);
+    // nothing
 }
 
 void MainWindow::on_pushButtonPauseResume_clicked(bool checked)
