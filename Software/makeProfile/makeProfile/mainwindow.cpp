@@ -39,6 +39,8 @@ MainWindow::~MainWindow()
     delete ui;
     delete usb;
     delete timer;
+    lightsensor->quit();
+    while(lightsensor->isRunning());
     delete lightsensor;
 }
 
