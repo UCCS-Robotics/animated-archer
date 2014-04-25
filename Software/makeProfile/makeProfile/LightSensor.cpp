@@ -74,6 +74,9 @@ LightSensor::LightSensor(QObject *p) : QObject(p), mIR(0), mFull(0), mDidInit(fa
 
 void LightSensor::updateSensor()
 {
+    if(!mDevice.isConnected())
+        return;
+
     if(!mDidInit)
     {
         mDidInit = true;
@@ -89,11 +92,8 @@ void LightSensor::updateSensor()
         disable();
     }
 
-    if(!mDevice.isConnected())
-        return;
-
     enable();
-    usleep(1000*102);
+    //usleep(1000*102);
     read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
         TSL2561_REGISTER_CHAN1_LOW, "light:ir");
     read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
