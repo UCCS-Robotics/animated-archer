@@ -6,6 +6,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    // Initialize GUI
     ui->setupUi(this);
     ui->spinBoxNumSample->hide();
     ui->spinBoxSampleDelay->hide();
@@ -13,25 +14,24 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->radioFilter->click();
     ui->label->hide();
     ui->label_2->hide();
-
     QWidget::setWindowTitle("Live Data");
 
+    // Initialize pointers
     usb = new Device;
     timer = new QTimer(this);
     lightsensor = new SensorThread(this);
 
-    autoScale = true;
-    currentTime = QDateTime::currentDateTime();
+    connect(timer, SIGNAL(timeout()),this,SLOT(on_timerExpire()));  // Used to update plot
+    connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));  // Used to emit an error from the device interface
+
+    plot(); // Initialize plot
+    lightsensor->start();   // Start lightsensor thread
+    timer->start(1000); // Start sampling at 1 second
+
+    // The following slider options must be initialized after starting the timer
     ui->horizontalSliderTScale->setValue(10);
     ui->horizontalSliderSpeed->setRange(1,100);
     ui->horizontalSliderSpeed->setValue(100);
-
-    connect(timer, SIGNAL(timeout()),this,SLOT(on_timerExpire()));
-    connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));
-
-    plot();
-    lightsensor->start();
-    timer->start(1000);
 }
 
 MainWindow::~MainWindow()
@@ -39,11 +39,12 @@ MainWindow::~MainWindow()
     delete ui;
     delete usb;
     delete timer;
-    lightsensor->quit();
-    while(lightsensor->isRunning());
+    lightsensor->quit();    //Stop thread
+    while(lightsensor->isRunning());    //Wait for thread to stop
     delete lightsensor;
 }
 
+// Option to take samples instead of streaming live data
 void MainWindow::on_radioSample_clicked()
 {
     ui->label->show();
@@ -53,6 +54,8 @@ void MainWindow::on_radioSample_clicked()
     ui->pushButtonSample->show();
     ui->pushButtonPauseResume->hide();
 }
+
+// This option exists if the user doesn't want filtered data
 void MainWindow::on_radioFilter_clicked()
 {
     ui->spinBoxNumSample->hide();
@@ -63,6 +66,7 @@ void MainWindow::on_radioFilter_clicked()
     ui->pushButtonPauseResume->show();
 }
 
+// Apply a running average filter to the incoming data
 void MainWindow::on_radioRunningAverage_clicked()
 {
     ui->spinBoxNumSample->hide();
@@ -73,6 +77,7 @@ void MainWindow::on_radioRunningAverage_clicked()
     ui->pushButtonPauseResume->show();
 }
 
+// Apply the Kalman filter to incoming data
 void MainWindow::on_radioKalman_clicked()
 {
     ui->spinBoxNumSample->hide();
@@ -96,6 +101,7 @@ void MainWindow::on_actionUS_Sensor_triggered()
     ui->labelGreen->hide();
 }
 
+// Accelerometer
 void MainWindow::on_actionAccelerometer_triggered()
 {
     sensor = ACCELEROMETER;
@@ -108,6 +114,7 @@ void MainWindow::on_actionAccelerometer_triggered()
     ui->labelGreen->show();
 }
 
+// Gyroscope
 void MainWindow::on_actionGyroscope_triggered()
 {
     sensor = GYROSCOPE;
@@ -120,6 +127,7 @@ void MainWindow::on_actionGyroscope_triggered()
     ui->labelGreen->show();
 }
 
+// Global Positioning System
 void MainWindow::on_actionGPS_triggered()
 {
     sensor = GPS;
@@ -132,6 +140,7 @@ void MainWindow::on_actionGPS_triggered()
     ui->labelGreen->show();
 }
 
+// Magnetometer
 void MainWindow::on_actionCompass_triggered()
 {
     sensor = COMPASS;
@@ -143,6 +152,8 @@ void MainWindow::on_actionCompass_triggered()
     ui->checkBoxData3->hide();
     ui->labelGreen->hide();
 }
+
+// Barometer
 void MainWindow::on_actionAltimiter_triggered()
 {
     sensor = ALTIMITER;
@@ -155,6 +166,7 @@ void MainWindow::on_actionAltimiter_triggered()
     ui->labelGreen->hide();
 }
 
+// Infrared Sensor
 void MainWindow::on_actionIR_Sensor_triggered()
 {
     sensor = INFRARED;
@@ -167,6 +179,7 @@ void MainWindow::on_actionIR_Sensor_triggered()
     ui->labelGreen->hide();
 }
 
+// Raw data (not passed through transfer function)
 void MainWindow::on_radioRaw_clicked()
 {
     switch(sensor){
@@ -200,6 +213,7 @@ void MainWindow::on_radioRaw_clicked()
     ui->mainPlot->replot();
 }
 
+// Make sure UI is displaying correct options
 void MainWindow::sensor_switched(){
     if(ui->radioRaw->isChecked()){
         ui->radioRaw->click();
@@ -208,6 +222,7 @@ void MainWindow::sensor_switched(){
     }
 }
 
+// Run the raw data through the proper transfer functions
 void MainWindow::on_radioConvert_clicked()
 {
     switch(sensor){
@@ -241,18 +256,21 @@ void MainWindow::on_radioConvert_clicked()
     ui->mainPlot->replot();
 }
 
+// Import light sensor data (for testing purposes)
 void MainWindow::processLightSensorData(quint16 data){
+    // Calculate running time
     elapsedTime = QDateTime::currentDateTime().toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    // Keep track of incoming data
     globalData.push_back(data);
+    // Add data to the first graph
     ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data);
-
+    // Set the xAxis value range, such that the screen 'pans' with the incoming data
     set_xscreen();
-
-    // same thing for graph 1, but only enlarge ranges (in case graph 1 is smaller than graph 0):
-    //    ui->mainPlot->graph(0)->rescaleAxes(true);
-
+    // Update the plot with the new data
     ui->mainPlot->replot();
+    // Display incoming data in text box
     ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data)+"\n");
+    // Auto scroll text box
     ui->plainTextOutput->ensureCursorVisible();
 }
 
@@ -262,10 +280,15 @@ void MainWindow::on_deviceError(const QString& msg)
     ui->plainTextOutput->ensureCursorVisible();
 }
 
+// Setup the plot params
 void MainWindow::plot(){
-    // add two new graphs and set their look:
+    autoScale = true;  // Autoscale plot
+    currentTime = QDateTime::currentDateTime();
+
+    // add new graph and set style
     ui->mainPlot->addGraph();
     ui->mainPlot->graph(0)->setPen(QPen(Qt::blue)); // line color blue for first graph
+    // Adds circles at each datapoint
     ui->mainPlot->graph(0)->setScatterStyle(ui->mainPlot->graph(0)->scatterStyle().ssCircle);
 
     // configure right and top axis to show ticks but no labels:
@@ -278,12 +301,12 @@ void MainWindow::plot(){
     connect(ui->mainPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->xAxis2, SLOT(setRange(QCPRange)));
     connect(ui->mainPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->yAxis2, SLOT(setRange(QCPRange)));
 
-    //    ui->mainPlot->graph(0)->addData(QVector<double>() << 1, QVector<double>() << 1);
     // let the ranges scale themselves so graph 0 fits perfectly in the visible area:
     ui->mainPlot->graph(0)->rescaleAxes();
     // Note: we could have also just called ui->mainPlot->rescaleAxes(); instead
     // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
     ui->mainPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+    // Set axis display type
     ui->mainPlot->xAxis->setDateTimeFormat("mm:ss:zzz");
     ui->mainPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
 }
@@ -293,20 +316,22 @@ void MainWindow::on_actionConnect_Device_triggered()
     // nothing
 }
 
+// Used to pause the sampling of data, and updating the plot
 void MainWindow::on_pushButtonPauseResume_clicked(bool checked)
 {
     if(checked){
         timer->stop();
     } else {
-        timer->start();
-
+        timer->start(ui->horizontalSliderSpeed->value());
     }
 }
 
+// Emit timer expiration to sensors to sample and update plot
 void MainWindow::on_timerExpire(){
     emit send_timer();
 }
 
+// Scale the yaxis with respect to the xaxis
 void MainWindow::on_horizontalSliderScale_valueChanged(int value)
 {
     ui->mainPlot->yAxis->setScaleRatio(ui->mainPlot->xAxis,value*5);
@@ -319,7 +344,7 @@ void MainWindow::on_checkBoxAutoScale_clicked(bool checked)
 }
 
 void MainWindow::set_xscreen(){
-    // Set xAxis scale data
+    // Set xAxis scale data, what is displayed while scrolling
     if(globalData.size()-ui->horizontalSliderTScale->value() > 0){
         lsg0.resize(ui->horizontalSliderTScale->value());
         for(int i = globalData.size()-ui->horizontalSliderTScale->value() - 1; i < lsg0.size(); i++){
@@ -329,8 +354,8 @@ void MainWindow::set_xscreen(){
     ui->mainPlot->rescaleAxes();
     if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
         ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0+1);
-//    ui->mainPlot->xAxis->setAutoTickStep(false);
-//    ui->mainPlot->xAxis->setTickStep(1);
+
+    // Set yAxis such that the most variable information for the screen can be shown
     if(autoScale){
         QVector<double>::iterator it = std::max_element(lsg0.begin(), lsg0.end());
         QVector<double>::iterator it2 = std::min_element(lsg0.begin(), lsg0.end());
@@ -338,6 +363,7 @@ void MainWindow::set_xscreen(){
     }
 }
 
+// Set the xAxis scale
 void MainWindow::on_horizontalSliderTScale_valueChanged(int value)
 {
     set_xscreen();
@@ -345,9 +371,11 @@ void MainWindow::on_horizontalSliderTScale_valueChanged(int value)
     ui->mainPlot->replot();
 }
 
+// Change the sample speed
 void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
 {
     ui->lcdNumberSpeed->display(value*10);
-    timer->stop();
+    if(timer->isActive())
+        timer->stop();
     timer->start(value*10);
 }
