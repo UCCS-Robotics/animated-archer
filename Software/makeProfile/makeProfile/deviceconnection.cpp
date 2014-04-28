@@ -29,6 +29,52 @@ DeviceConnection::DeviceConnection(QObject *parent) :
 
 void DeviceConnection::update()
 {
+    // Buffer to store the packet in.
+    uint8_t buffer[PACKET_SIZE];
+
+    //  If the device is not connected, try to connect to the device.
+    if(mState == DeviceState_Disconnected)
+    {
+        // Try to connect to the device.
+        if(rawhid_open(DEVICE_MAX, DEVICE_VID, DEVICE_PID,
+            DEVICE_USAGE_PAGE, DEVICE_USAGE) <= 0)
+        {
+            // Failed to connect to the device, stay disconnected.
+            return;
+        }
+        else
+        {
+            int sz = 0; // Keep track of the recv return code.
+
+            // Before we complete the connection, read until we see an
+            // info packet so we don't parse any old packets from a
+            // previous connection.
+            do
+            {
+                // Read the packet.
+                sz = rawhid_recv(0, buffer, PACKET_SIZE, 0);
+            }
+            while(sz > 0 && ((Packet*)buffer)->type != PacketType_Info);
+
+            // Check the last recv, if the return value was < 0 we
+            // disconnected from the device already, don't connect.
+            if(sz < 0)
+                return;
+
+            // We connected to the device, let the client know.
+            emit connected();
+
+            // Update the device state.
+            mState = DeviceState_Connected;
+
+            // Start the device lost timer.
+            mDeviceLostTimer.start(LOST_TIME);
+
+            // Make sure we reset the firmware error.
+            mReportedBadFirmware = false;
+        }
+    }
+
     // Iterator for the pending transactions.
     QMutableMapIterator<uint32_t, DeviceTransactionPtr> it(mPendingTransactions);
 
@@ -47,35 +93,6 @@ void DeviceConnection::update()
         }
     }
 
-    // Buffer to store the packet in.
-    uint8_t buffer[PACKET_SIZE];
-
-    //  If the device is not connected, try to connect to the device.
-    if(mState == DeviceState_Disconnected)
-    {
-        // Try to connect to the device.
-        if(rawhid_open(DEVICE_MAX, DEVICE_VID, DEVICE_PID,
-            DEVICE_USAGE_PAGE, DEVICE_USAGE) <= 0)
-        {
-            // Failed to connect to the device, stay disconnected.
-            return;
-        }
-        else
-        {
-            // We connected to the device, let the client know.
-            emit connected();
-
-            // Update the device state.
-            mState = DeviceState_Connected;
-
-            // Start the device lost timer.
-            mDeviceLostTimer.start(LOST_TIME);
-
-            // Make sure we reset the firmware error.
-            mReportedBadFirmware = false;
-        }
-    }
-
     // Check if a packet has arrived.
     int sz = rawhid_recv(0, buffer, PACKET_SIZE, RECV_TIMEOUT);
 
@@ -83,16 +100,7 @@ void DeviceConnection::update()
     if(sz < 0)
     {
         // Close the device.
-        rawhid_close(0);
-
-        // Let the client know the device was disconnected.
-        emit disconnected();
-
-        // Update the device state.
-        mState = DeviceState_Disconnected;
-
-        // Stop the device lost timer.
-        mDeviceLostTimer.stop();
+        close();
 
         return;
     }
@@ -258,23 +266,32 @@ void DeviceConnection::parseStatus(Packet *p)
     }
 }
 
-void DeviceConnection::deviceLost()
+void DeviceConnection::close()
 {
+    // Stop the device lost timer now that the device is disconnected.
+    mDeviceLostTimer.stop();
+
     // Don't bother if we know it is disconnected.
     if(mState == DeviceState_Disconnected)
-    {
-        mDeviceLostTimer.stop();
         return;
-    }
 
     // Close the device.
     rawhid_close(0);
+
+    // Clear all pending transactions.
+    mPendingTransactions.clear();
 
     // Let the client know the device was disconnected.
     emit disconnected();
 
     // Update the device state.
     mState = DeviceState_Disconnected;
+}
+
+void DeviceConnection::deviceLost()
+{
+    // Close the device connection.
+    close();
 
     // Report an error.
     emit error(tr("Device timeout. Device has been lost to ninjas."));
@@ -347,14 +364,20 @@ void DeviceConnection::write(quint8 addr, const QByteArray& _data,
     trans->setWriteData(QByteArray((char*)data, sz));
     trans->setUserData(userData);
 
-    // Advertise the transaction.
-    emit transactionStarted(trans);
-
-    // Add the transaction to the pending transactions.
-    mPendingTransactions[p->tag] = trans;
-
     // Send the packet to the device.
-    sendPacket(p);
+    if(sendPacket(p))
+    {
+        // Advertise the transaction.
+        emit transactionStarted(trans);
+
+        // Add the transaction to the pending transactions.
+        mPendingTransactions[p->tag] = trans;
+    }
+    else
+    {
+        // The transaction failed to send.
+        emit transactionFailed(trans);
+    }
 }
 
 void DeviceConnection::read(quint8 addr, quint64 sz,
@@ -412,14 +435,20 @@ void DeviceConnection::read(quint8 addr, quint64 sz,
     trans->setAddress(addr);
     trans->setUserData(userData);
 
-    // Advertise the transaction.
-    emit transactionStarted(trans);
-
-    // Add the transaction to the pending transactions.
-    mPendingTransactions[p->tag] = trans;
-
     // Send the packet to the device.
-    sendPacket(p);
+    if(sendPacket(p))
+    {
+        // Advertise the transaction.
+        emit transactionStarted(trans);
+
+        // Add the transaction to the pending transactions.
+        mPendingTransactions[p->tag] = trans;
+    }
+    else
+    {
+        // The transaction failed to send.
+        emit transactionFailed(trans);
+    }
 }
 
 uint32_t DeviceConnection::nextTransactionID()
@@ -435,12 +464,28 @@ uint32_t DeviceConnection::nextTransactionID()
     return id;
 }
 
-void DeviceConnection::sendPacket(Packet *p)
+bool DeviceConnection::sendPacket(Packet *p)
 {
     // Send the packet.
     int sentSize = rawhid_send(0, p, PACKET_SIZE, SEND_TIMEOUT);
 
     // Make sure it sent.
-    if(sentSize != PACKET_SIZE)
-        emit error(tr("Failed to send packet. Sent size: %1.").arg(sentSize));
+    if(sentSize == -110)
+    {
+        emit error(tr("Failed to send packet. Send timed out."));
+
+        return false;
+    }
+    else if(sentSize != PACKET_SIZE)
+    {
+        emit error(tr("Failed to send packet. Device may be lost."
+            " Return code: %1").arg(sentSize));
+
+        // Close the device.
+        close();
+
+        return false;
+    }
+
+    return true;
 }

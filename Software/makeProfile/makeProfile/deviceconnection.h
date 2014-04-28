@@ -92,7 +92,8 @@ private:
     void parseStatus(Packet *p);
 
     uint32_t nextTransactionID();
-    void sendPacket(Packet *p);
+    bool sendPacket(Packet *p);
+    void close();
 
     bool mReportedBadFirmware;
     uint32_t mNextTransactionID;
