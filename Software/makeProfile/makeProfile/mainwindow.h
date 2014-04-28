@@ -7,6 +7,7 @@
 #include "qcustomplot.h"
 #include "device.h"
 #include "sensorthread.h"
+#include "fakesensor.h"
 
 #define ULTRASONIC 1
 #define ACCELEROMETER 2
@@ -88,6 +89,7 @@ private:
     Device *usb;
     QTimer *timer;
     SensorThread *lightsensor;
+    FakeSensor *fakesensor;
     int time;
     QDateTime currentTime;
     QVector <double> lsg0, globalData;

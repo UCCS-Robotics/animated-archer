@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     usb = new Device;
     timer = new QTimer(this);
     lightsensor = new SensorThread(this);
+    fakesensor = new FakeSensor(this);
 
     connect(timer, SIGNAL(timeout()),this,SLOT(on_timerExpire()));  // Used to update plot
     connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));  // Used to emit an error from the device interface
@@ -32,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->horizontalSliderTScale->setValue(10);
     ui->horizontalSliderSpeed->setRange(1,100);
     ui->horizontalSliderSpeed->setValue(100);
+
 }
 
 MainWindow::~MainWindow()

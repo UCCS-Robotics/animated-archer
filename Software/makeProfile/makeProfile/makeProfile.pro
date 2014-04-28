@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     hid.c \
     crc32.c \
     devicethread.cpp \
-    devicetransaction.cpp
+    devicetransaction.cpp \
+    fakesensor.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
@@ -34,7 +35,8 @@ HEADERS  += mainwindow.h \
     hid.h \
     crc32.h \
     devicethread.h \
-    devicetransaction.h
+    devicetransaction.h \
+    fakesensor.h
 
 FORMS    += mainwindow.ui
 
