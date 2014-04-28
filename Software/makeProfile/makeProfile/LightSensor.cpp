@@ -71,6 +71,8 @@ LightSensor::LightSensor(QObject *p) : QObject(p), mIR(0), mFull(0), mDidInit(fa
 {
     connect(&mDevice, SIGNAL(transactionComplete(DeviceTransactionPtr)),
         this, SLOT(transactionComplete(DeviceTransactionPtr)));
+    connect(&mDevice, SIGNAL(burstResult(quint8, quint32, const QByteArray&)),
+        this, SLOT(burstResult(quint8, quint32, const QByteArray&)));
     connect(mDevice.connection(), SIGNAL(disconnected()), this, SLOT(disconnected()));
 }
 
@@ -98,8 +100,23 @@ void LightSensor::updateSensor()
         write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
             TSL2561_INTEGRATIONTIME_101MS | TSL2561_GAIN_16X);
         disable();
+
+        BurstProgram prog;
+        uint8_t reg1 = TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN1_LOW;
+        prog.addWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg1, 1));
+        prog.addRead(TSL2561_ADDR_FLOAT, 2);
+        uint8_t reg2 = TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN0_LOW;
+        prog.addWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg2, 1));
+        prog.addRead(TSL2561_ADDR_FLOAT, 2);
+        prog.setProgramID(0);
+        //prog.setRunInterval(25); // 25ms or 40Hz
+        prog.setRunInterval(100); // 1000ms or 1Hz
+        Q_ASSERT(prog.isValid());
+
+        mDevice.startProgram(prog, "light");
     }
 
+    /*
     enable();
     //usleep(1000*102);
     read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
@@ -107,9 +124,22 @@ void LightSensor::updateSensor()
     read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
         TSL2561_REGISTER_CHAN0_LOW, "light:full");
     disable();
+    */
 
 	//i2cWriteSingle(SEG_LEFT >> 1, i2cReadSingle(SWITCH >> 1));
 	//i2cWriteSingle(SEG_RIGHT >> 1, i2cReadSingle(SWITCH >> 1));
+}
+
+void LightSensor::burstResult(quint8 programID, quint32 timeStamp, const QByteArray& data)
+{
+    if(programID != 0 || data.size() != 4)
+        return;
+
+    const uint16_t *values = (uint16_t*)data.constData();
+
+    uint16_t visible = values[1] - values[0];
+
+    emit sentLightSensorData(visible);
 }
 
 void LightSensor::transactionComplete(const DeviceTransactionPtr& trans)

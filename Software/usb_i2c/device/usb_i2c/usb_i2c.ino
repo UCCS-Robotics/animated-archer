@@ -5,10 +5,16 @@
 // MM - Major
 // mm - Minor
 // RRRR - Revision
-const uint32_t FIRMWARE_VER = 0x01010001;
+const uint32_t FIRMWARE_VER = 0x01020001;
 
 // RawHID packets are always 64 bytes.
 const int PACKET_SIZE = 64;
+
+// Maximum number of burst programs.
+const int MAX_PROG = 4;
+
+// Invalid program ID.
+const uint8_t INVALID_PROG = 0xFF;
 
 // Time (in milliseconds) to wait for a packet to send before giving up.
 const int SEND_TIMEOUT = 100;
@@ -16,16 +22,33 @@ const int SEND_TIMEOUT = 100;
 // Time (in milliseconds) between info packets.
 const unsigned int INFO_PACKET_DELAY = 1000; // 1 sec.
 
+typedef enum _BurstOpcode
+{
+  BurstOpcode_NOP = 0,
+  BurstOpcode_Read = 1,
+  BurstOpcode_Write = 2,
+  BurstOpcode_WriteNoStop = 3
+} BurstOpcode;
+
+typedef struct _BurstProgram
+{
+  uint16_t runInterval; // 00 - Time (in ms) to wait for the program to execute again.
+  uint8_t  programID;   // 02 - ID of the program (or 0xFF for an invalid program).
+  uint8_t  program[45]; // 03 - Data for the program consisting of an opcode, address, size.
+} __attribute__ ((__packed__)) BurstProgram;
+
 typedef enum _PacketType
 {
   // These are sent from the PC to the device.
-  PacketType_ReqRead = 'R',  // Request a read from an I2C slave.
-  PacketType_ReqWrite = 'W', // Request a write to an I2C slave.
+  PacketType_ReqRead = 'R',    // Request a read from an I2C slave.
+  PacketType_ReqWrite = 'W',   // Request a write to an I2C slave.
+  PacketType_BurstProg = 'P',  // Write a new bust program.
   
   // These are send from the device to the PC.
-  PacketType_Info = 'I',     // Device is idle but responding/working.
-  PacketType_Data = 'D',     // Data returned from a I2C slave read request.
-  PacketType_Status = 'S',   // Status (return code) of a request.
+  PacketType_Info = 'I',       // Device is idle but responding/working.
+  PacketType_Data = 'D',       // Data returned from a I2C slave read request.
+  PacketType_Status = 'S',     // Status (return code) of a request.
+  PacketType_BurstResult = 'B' // Result of a burst program.
 } PacketType;
 
 typedef struct _Packet
@@ -41,19 +64,19 @@ typedef struct _Packet
 } __attribute__ ((__packed__)) Packet;
 
 // Function prototypes.
+void burstUpdate();
 void sendInfoPacket();
 void parseReqRead(Packet *p);
 void parseReqWrite(Packet *p);
+void parseBurstProg(Packet *p);
+void runProgram(BurstProgram *prog);
 uint32_t crc32(const void *data, uint32_t sz);
 
-void setup()
-{
-  // Enable the CRC module clock.
-  SIM_SCGC6 |= SIM_SCGC6_CRC;
+// Burst program data.
+BurstProgram programData[MAX_PROG];
 
-  // Initialize the I2C module.
-  Wire.begin();
-}
+// Time elapsed since each burst program executed.
+elapsedMillis msUntilNextBurst[MAX_PROG];
 
 // Time until the next info packet should send.
 elapsedMillis msUntilNextInfoPacket;
@@ -63,6 +86,152 @@ uint32_t infoCounter = 0;
 
 // Where to store the current packet.
 byte buffer[PACKET_SIZE];
+
+// Time since the device was turned on (in ms; ~49.7 days).
+elapsedMillis msSinceBoot;
+
+void setup()
+{
+  // Enable the CRC module clock.
+  SIM_SCGC6 |= SIM_SCGC6_CRC;
+
+  // Initialize the I2C module.
+  Wire.begin();
+
+  // Initialize the burst program data.
+  for(int i = 0; i < MAX_PROG; i++)
+  {
+    // Get a pointer to the program.
+    BurstProgram *prog = &programData[i];
+
+    // Initialize the data.
+    prog->runInterval = 0;
+    prog->programID = INVALID_PROG;
+
+    // Fill the program with NOPs.
+    for(int j = 0; j < 15; j++)
+    {
+      prog->program[j * 3] = BurstOpcode_NOP; // Opcode.
+      prog->program[j * 3 + 1] = 0;           // Address.
+      prog->program[j * 3 + 1] = 0;           // Size.
+    }
+  }
+}
+
+void runProgram(BurstProgram *prog)
+{
+  // Cast the buffer to a packet.
+  Packet *p = (Packet*)buffer;
+
+  // Set the packet data.
+  p->type = PacketType_BurstResult;
+  p->addr = prog->programID;
+  p->sz = 0;
+  p->reserved1 = 0;
+  p->tag = msSinceBoot;
+  p->reserved2 = 0;
+
+  int i = 0; // Counter pointing into the program data.
+
+  // Run the program.
+  // We need at least 3 bytes for opcode, address, size.
+  while(i <= (45 - 3))
+  {
+    uint8_t opcode = prog->program[i++]; // Opcode.
+    uint8_t addr = prog->program[i++];   // Address.
+    uint8_t sz = prog->program[i++];     // Size.
+
+    switch(opcode)
+    {
+      case BurstOpcode_Read:
+      {
+        // Read data from the I2C slave.
+        Wire.requestFrom(addr, (size_t)sz);
+
+        // Get how much data was read.
+        int avail = Wire.available();
+
+        // Adjust the size so we fit within 48 bytes.
+        if((avail + p->sz) > 48)
+          avail = 48 - p->sz;
+
+        // Read the data.
+        for(uint8_t j = 0; j < avail; j++)
+          p->data[p->sz + j] = Wire.receive();
+
+        // Adjust the size of the results.
+        p->sz += avail;
+
+        break;
+      }
+      case BurstOpcode_Write:
+      {
+        // Start an I2C slave write.
+        Wire.beginTransmission(addr);
+
+        // Write the data to the I2C slave.
+        for(int j = 0; j < sz && i < 45; j++)
+          Wire.send(prog->program[i++]);
+
+        // Complete the transaction.
+        Wire.endTransmission();
+
+        break;
+      }
+      case BurstOpcode_WriteNoStop:
+      {
+        // Start an I2C slave write.
+        Wire.beginTransmission(addr);
+
+        // Write the data to the I2C slave.
+        for(int j = 0; j < sz && i < 45; j++)
+          Wire.send(prog->program[i++]);
+
+        // Complete the transaction.
+        Wire.endTransmission(I2C_NOSTOP);
+
+        break;
+      }
+      case BurstOpcode_NOP:
+      default:
+        break;
+    }
+  }
+
+  // Zero the data.
+  for(uint8_t i = p->sz; i < 48; i++)
+    p->data[i] = 0;
+
+  // Calculate the CRC-32 checksum.
+  p->crc = crc32(buffer, PACKET_SIZE - 4);
+
+  // Transmit the packet and hope to hell it goes through.
+  RawHID.send(buffer, SEND_TIMEOUT);
+}
+
+void burstUpdate()
+{
+  // Check each burst program.
+  for(int i = 0; i < MAX_PROG; i++)
+  {
+    // Get a pointer to the program.
+    BurstProgram *prog = &programData[i];
+
+    // Check if the program is valid.
+    if(prog->programID >= MAX_PROG || prog->programID != i)
+      continue;
+
+    // If it has not been long enough, skip to the next program.
+    if(msUntilNextBurst[i] < prog->runInterval)
+      continue;
+
+    // Adjust the time to the next burst.
+    msUntilNextBurst[i] -= prog->runInterval;
+
+    // Run the program and send the results back to the user.
+    runProgram(prog);
+  }
+}
 
 void sendInfoPacket()
 {
@@ -154,8 +323,91 @@ void parseReqWrite(Packet *p)
   RawHID.send(p, SEND_TIMEOUT);
 }
 
+void parseBurstProg(Packet *p)
+{
+  int readTotal = 0; // Total number of bytes that will be read by the program.
+  uint8_t programStatus = 0; // Status of parsing the program.
+
+  // Get a pointer to the program.
+  BurstProgram *prog = (BurstProgram*)p->data;
+
+  // Check for a valid program ID.
+  if(prog->programID >= MAX_PROG)
+    programStatus = 1;
+
+  int i = 0; // Counter pointing into the program data.
+
+  // Check the program.
+  while(i <= (45 - 3))
+  {
+    uint8_t opcode = prog->program[i++]; // Opcode.
+    uint8_t addr = prog->program[i++];   // Address.
+    uint8_t sz = prog->program[i++];     // Size.
+
+    switch(opcode)
+    {
+      case BurstOpcode_Read:
+        // Add to the total read.
+        readTotal += sz;
+        break;
+      case BurstOpcode_Write:
+        // The write data must appear after.
+        i += sz;
+        break;
+      case BurstOpcode_WriteNoStop:
+        // The write data must appear after.
+        i += sz;
+        break;
+      case BurstOpcode_NOP:
+        break;
+      default:
+        programStatus = 2;
+        break;
+    }
+  }
+
+  // Check we don't read too much data.
+  if(readTotal > 48)
+    programStatus = 2;
+
+  // Check we don't get write data past the end of the program data.
+  if(i > 45)
+    programStatus = 2;
+
+  // If the program is valid, load it.
+  if(programStatus == 0)
+  {
+    // Copy the program.
+    memcpy(&programData[prog->programID], prog, sizeof(BurstProgram));
+
+    // Reset the elapsed time for the program.
+    msUntilNextBurst[prog->programID] = 0;
+  }
+
+  // Create the status (return code) packet.
+  p->type = PacketType_Status;
+  p->reserved1 = 0;
+  p->reserved2 = 0;
+
+  // Set the return code. 0=Program OK, 1=Bad Program ID, 2=Bad Program
+  p->data[0] = programStatus;
+
+  // Zero the data.
+  for(uint8_t i = 1; i < 48; i++)
+    p->data[i] = 0;
+
+  // Calculate the CRC-32 checksum.
+  p->crc = crc32(p, PACKET_SIZE - 4);
+
+  // Transmit the packet and hope to hell it goes through.
+  RawHID.send(p, SEND_TIMEOUT);
+}
+
 void loop()
-{ 
+{
+  // Update the burst programs.
+  burstUpdate();
+
   // If it has been long enough, send another info packet.
   if(msUntilNextInfoPacket >= INFO_PACKET_DELAY)
   {
@@ -190,6 +442,9 @@ void loop()
       break;
     case PacketType_ReqWrite:
       parseReqWrite(p);
+      break;
+    case PacketType_BurstProg:
+      parseBurstProg(p);
       break;
     default:
       break;

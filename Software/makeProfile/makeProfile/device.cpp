@@ -18,10 +18,14 @@ Device::Device(QObject *parent) : QObject(parent)
         this, SIGNAL(transactionComplete(DeviceTransactionPtr)));
     connect(mConnection, SIGNAL(transactionFailed(DeviceTransactionPtr)),
         this, SIGNAL(transactionFailed(DeviceTransactionPtr)));
+    connect(mConnection, SIGNAL(burstResult(quint8, quint32, const QByteArray&)),
+        this, SIGNAL(burstResult(quint8, quint32, const QByteArray&)));
     connect(this, SIGNAL(startWrite(quint8,const QByteArray&,const QVariant&)),
         mConnection, SLOT(write(quint8,const QByteArray&,const QVariant&)));
     connect(this, SIGNAL(startRead(quint8,quint64,const QVariant&)),
         mConnection, SLOT(read(quint8,quint64,const QVariant&)));
+    connect(this, SIGNAL(startProgram(const BurstProgram&,const QVariant&)),
+        mConnection, SLOT(program(const BurstProgram&,const QVariant&)));
 }
 
 Device::~Device()
@@ -79,4 +83,9 @@ void Device::sendWrite(uint8_t addr, const uint8_t *data, size_t sz,
 void Device::sendRead(uint8_t addr, size_t sz, const QVariant& userData)
 {
     emit startRead(addr, sz, userData);
+}
+
+void Device::sendProgram(const BurstProgram& prog, const QVariant& userData)
+{
+    emit startProgram(prog, userData);
 }
