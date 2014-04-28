@@ -88,3 +88,13 @@ uint32_t DeviceTransaction::id() const
 {
     return d->id;
 }
+
+BurstProgram DeviceTransaction::program() const
+{
+    return d->prog;
+}
+
+void DeviceTransaction::setBurstProgram(const BurstProgram& prog)
+{
+    d->prog = prog;
+}

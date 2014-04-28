@@ -1,7 +1,7 @@
 #include "deviceconnection.h"
 #include "crc32.h"
 #include "hid.h"
-
+#include <iostream>
 #define DEVICE_MAX (1)
 #define DEVICE_VID (0x16C0)
 #define DEVICE_PID (0x0486)
@@ -157,6 +157,9 @@ void DeviceConnection::update()
         case PacketType_Status:
             parseStatus(p);
             break;
+        case PacketType_BurstResult:
+            parseBurstResult(p);
+            break;
         default:
             emit error(tr("Unknown Packet type: %1 (%2)").arg(
                 (char)p->type).arg((int)p->type));
@@ -264,6 +267,14 @@ void DeviceConnection::parseStatus(Packet *p)
         break;
         }
     }
+}
+
+void DeviceConnection::parseBurstResult(Packet *p)
+{
+    uint8_t  programID = p->addr; // Program ID.
+    uint32_t timeStamp = p->tag;  // Timestamp (ms since device boot).
+
+    emit burstResult(programID, timeStamp, QByteArray((char*)p->data, p->sz));
 }
 
 void DeviceConnection::close()
@@ -434,6 +445,67 @@ void DeviceConnection::read(quint8 addr, quint64 sz,
         DeviceTransaction::Transaction_Read, p->tag));
     trans->setAddress(addr);
     trans->setUserData(userData);
+
+    // Send the packet to the device.
+    if(sendPacket(p))
+    {
+        // Advertise the transaction.
+        emit transactionStarted(trans);
+
+        // Add the transaction to the pending transactions.
+        mPendingTransactions[p->tag] = trans;
+    }
+    else
+    {
+        // The transaction failed to send.
+        emit transactionFailed(trans);
+    }
+}
+
+void DeviceConnection::program(const BurstProgram &prog,
+    const QVariant& userData)
+{
+    // Ensure the program is valid.
+    if(!prog.isValid())
+    {
+        emit error(tr("Not sending program %1 because it is not valid.").arg(
+            prog.programID()));
+        return;
+    }
+
+    // Make sure the device is connected.
+    if(mState != DeviceState_Connected)
+    {
+        emit error(tr("Program will not complete because device is not connected."));
+
+        return;
+    }
+
+    // Where to write the packet data.
+    uint8_t buffer[PACKET_SIZE];
+
+    // Cast the buffer to a packet.
+    Packet *p = (Packet*)buffer;
+
+    // Set the packet info.
+    p->type = PacketType_BurstProg;
+    p->addr = 0;
+    p->sz = 0;
+    p->reserved1 = 0;
+    p->tag = nextTransactionID();
+    p->reserved2 = 0;
+
+    // Add the data to the packet.
+    memcpy(p->data, prog.data().constData(), 48);
+
+    // Calculate the CRC-32 checksum.
+    p->crc = crc32(buffer, PACKET_SIZE - 4);
+
+    // Create a transaction for this device.
+    DeviceTransactionPtr trans(new DeviceTransaction(
+        DeviceTransaction::Transaction_BurstProg, p->tag));
+    trans->setUserData(userData);
+    trans->setBurstProgram(prog);
 
     // Send the packet to the device.
     if(sendPacket(p))

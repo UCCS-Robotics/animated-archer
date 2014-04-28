@@ -1,6 +1,8 @@
 #ifndef DEVICETRANSACTION_H
 #define DEVICETRANSACTION_H
 
+#include "burstprogram.h"
+
 #include <QDateTime>
 #include <QByteArray>
 #include <QVariant>
@@ -18,6 +20,7 @@ public:
         Transaction_Read,
         Transaction_Write,
         Transaction_WriteRead,
+        Transaction_BurstProg
     } TransactionType;
 
     DeviceTransaction();
@@ -39,6 +42,9 @@ public:
     uint8_t address() const;
     void setAddress(uint8_t addr);
 
+    BurstProgram program() const;
+    void setBurstProgram(const BurstProgram& prog);
+
     uint32_t id() const;
 
 private:
@@ -51,6 +57,7 @@ public:
     DeviceTransactionData();
     DeviceTransactionData(DeviceTransaction::TransactionType type, uint32_t id);
 
+    BurstProgram prog;
     DeviceTransaction::TransactionType type;
     QDateTime time;
     QByteArray writeData, readData;

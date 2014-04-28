@@ -1,6 +1,7 @@
 #ifndef DEVICECONNECTION_H
 #define DEVICECONNECTION_H
 
+#include "burstprogram.h"
 #include "devicetransaction.h"
 
 #include <QObject>
@@ -24,10 +25,14 @@ signals:
     void transactionComplete(const DeviceTransactionPtr& trans);
     void transactionFailed(const DeviceTransactionPtr& trans);
 
+    void burstResult(quint8 programID, quint32 timeStamp, const QByteArray& data);
+
 public slots:
     void write(quint8 addr, const QByteArray& data,
         const QVariant& userData = QVariant());
     void read(quint8 addr, quint64 sz,
+        const QVariant& userData = QVariant());
+    void program(const BurstProgram& prog,
         const QVariant& userData = QVariant());
 
 private slots:
@@ -46,7 +51,7 @@ private:
     // MM - Major
     // mm - Minor
     // RRRR - Revision
-    static const uint32_t FIRMWARE_VER = 0x01010001;
+    static const uint32_t FIRMWARE_VER = 0x01020001;
 
     // RawHID packets are always 64 bytes.
     static const int PACKET_SIZE = 64;
@@ -66,13 +71,15 @@ private:
     typedef enum _PacketType
     {
       // These are sent from the PC to the device.
-      PacketType_ReqRead = 'R',  // Request a read from an I2C slave.
-      PacketType_ReqWrite = 'W', // Request a write to an I2C slave.
+      PacketType_ReqRead = 'R',    // Request a read from an I2C slave.
+      PacketType_ReqWrite = 'W',   // Request a write to an I2C slave.
+      PacketType_BurstProg = 'P',  // Write a new bust program.
 
       // These are send from the device to the PC.
-      PacketType_Info = 'I',     // Device is idle but responding/working.
-      PacketType_Data = 'D',     // Data returned from a I2C slave read request.
-      PacketType_Status = 'S',   // Status (return code) of a request.
+      PacketType_Info = 'I',       // Device is idle but responding/working.
+      PacketType_Data = 'D',       // Data returned from a I2C slave read request.
+      PacketType_Status = 'S',     // Status (return code) of a request.
+      PacketType_BurstResult = 'B' // Result of a burst program.
     } PacketType;
 
     typedef struct _Packet
@@ -90,6 +97,7 @@ private:
     void parseInfo(Packet *p);
     void parseData(Packet *p);
     void parseStatus(Packet *p);
+    void parseBurstResult(Packet *p);
 
     uint32_t nextTransactionID();
     bool sendPacket(Packet *p);
