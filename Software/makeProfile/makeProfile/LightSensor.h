@@ -4,7 +4,7 @@
 #include "device.h"
 
 #include <QtCore/QObject>
-#include <QtCore/QTimer>
+#include <QtCore/QDateTime>
 
 #include <stdint.h>
 
@@ -18,28 +18,19 @@ public:
     LightSensor(QObject *parent = 0);
 
 private slots:
-	void updateSensor();
+    void connected();
     void disconnected();
     void transactionComplete(const DeviceTransactionPtr& trans);
     void burstResult(quint8 programID, quint32 timeStamp, const QByteArray& data);
 
 signals:
-//    void sendStringMain(const QString &);
-    void sentLightSensorData(quint16);
+    void sensorData(const QDateTime& stamp, quint16);
 
 private:
-	void enable();
-	void disable();
-
-    void read16(uint8_t reg, const QString& userData);
-	void write8(uint8_t reg, uint8_t value);
-
-    uint16_t mIR, mFull;
-    bool mDidInit;
+    uint32_t mFirstStamp;
 
     Device mDevice;
-	QTextEdit *mEditor;
-	QTimer mTimer;
+    QDateTime mConnectTime;
 };
 
 #endif // __Sensor_h__

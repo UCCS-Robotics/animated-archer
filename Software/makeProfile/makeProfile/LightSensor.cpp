@@ -1,31 +1,9 @@
 #include "LightSensor.h"
 #include "deviceconnection.h"
 
-#include <unistd.h>
 #include <iostream>
 
-#define	I2C_0  (0x40) // I2C Remote 8-bit I/O
-#define	I2C_1  (0x42) // Expander addresses
-#define	I2C_2  (0x44) // PCF8574
-#define	I2C_3  (0x46)
-#define	I2C_4  (0x48)
-#define	I2C_5  (0x4A)
-#define	I2C_6  (0x4C)
-#define	I2C_7  (0x4E)
-#define	I2C_0A (0x70) // I2C Remote 8-bit I/O
-#define	I2C_1A (0x72) // Expander addresses
-#define	I2C_2A (0x74) // PCF8574A
-#define	I2C_3A (0x76)
-#define	I2C_4A (0x78)
-#define	I2C_5A (0x7A)
-#define	I2C_6A (0x7C)
-#define	I2C_7A (0x7E)
-
-#define SWITCH    (I2C_0)
-#define SEG_LEFT  (I2C_3)
-#define SEG_RIGHT (I2C_4)
-
-#define TSL2561_ADDR_FLOAT 0x39
+#define TSL2561_ADDR_FLOAT        (0x39)
 
 #define TSL2561_COMMAND_BIT       (0x80)    // Must be 1
 #define TSL2561_CLEAR_BIT         (0x40)    // Clears any pending interrupt (write 1 to clear)
@@ -67,135 +45,102 @@ typedef enum
 }
 tsl2561Gain_t;
 
-LightSensor::LightSensor(QObject *p) : QObject(p), mIR(0), mFull(0), mDidInit(false)
+LightSensor::LightSensor(QObject *p) : QObject(p), mFirstStamp(0)
 {
+    // Connect the driver signals.
     connect(&mDevice, SIGNAL(transactionComplete(DeviceTransactionPtr)),
         this, SLOT(transactionComplete(DeviceTransactionPtr)));
     connect(&mDevice, SIGNAL(burstResult(quint8, quint32, const QByteArray&)),
         this, SLOT(burstResult(quint8, quint32, const QByteArray&)));
+    connect(mDevice.connection(), SIGNAL(connected()), this, SLOT(connected()));
     connect(mDevice.connection(), SIGNAL(disconnected()), this, SLOT(disconnected()));
 }
 
-void LightSensor::disconnected()
+void LightSensor::connected()
 {
-    // Make sure we init again when the device comes back.
-    mDidInit = false;
-}
+    // Data for the commands that are about to be written.
+    const uint8_t powerOnData[2] = {
+        TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,  // Register
+        TSL2561_CONTROL_POWERON                          // Argument
+    };
+    const uint8_t configSensorData[2] = {
+        TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,   // Register
+        TSL2561_INTEGRATIONTIME_101MS | TSL2561_GAIN_16X // Argument
+    };
 
-void LightSensor::updateSensor()
-{
-    if(!mDevice.isConnected())
-        return;
+    // Turn on the sensor then set timing and gain.
+    mDevice.sendWrite(TSL2561_ADDR_FLOAT, powerOnData, 2, "light");
+    mDevice.sendWrite(TSL2561_ADDR_FLOAT, configSensorData, 2, "light");
 
-    if(!mDidInit)
-    {
-        mDidInit = true;
+    // Data for the burst program commands.
+    const uint8_t reg1 = TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN1_LOW;
+    const uint8_t reg2 = TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN0_LOW;
 
-        uint8_t cmd = TSL2561_REGISTER_ID;
-        // Initialize the light LightSensor.
-        mDevice.startWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&cmd, 1), "light");
+    // The burst program we are about to describe.
+    BurstProgram prog;
 
-        // Set timing and gain.
-        enable();
-        write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
-            TSL2561_INTEGRATIONTIME_101MS | TSL2561_GAIN_16X);
-        disable();
+    // First send the command to read the IR value.
+    prog.addWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg1, 1));
+    prog.addRead(TSL2561_ADDR_FLOAT, 2);
 
-        BurstProgram prog;
-        uint8_t reg1 = TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN1_LOW;
-        prog.addWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg1, 1));
-        prog.addRead(TSL2561_ADDR_FLOAT, 2);
-        uint8_t reg2 = TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN0_LOW;
-        prog.addWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg2, 1));
-        prog.addRead(TSL2561_ADDR_FLOAT, 2);
-        prog.setProgramID(0);
-        //prog.setRunInterval(25); // 25ms or 40Hz
-        prog.setRunInterval(100); // 1000ms or 1Hz
-        Q_ASSERT(prog.isValid());
+    // Next send the command to read the full value.
+    prog.addWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg2, 1));
+    prog.addRead(TSL2561_ADDR_FLOAT, 2);
 
-        mDevice.startProgram(prog, "light");
-    }
+    // Set the program ID and update interval.
+    prog.setProgramID(0);
+    prog.setRunInterval(25); // 25ms or 40Hz
 
-    /*
-    enable();
-    //usleep(1000*102);
-    read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
-        TSL2561_REGISTER_CHAN1_LOW, "light:ir");
-    read16(TSL2561_COMMAND_BIT | TSL2561_WORD_BIT |
-        TSL2561_REGISTER_CHAN0_LOW, "light:full");
-    disable();
-    */
+    // Make sure the program is valid.
+    Q_ASSERT(prog.isValid());
 
-	//i2cWriteSingle(SEG_LEFT >> 1, i2cReadSingle(SWITCH >> 1));
-	//i2cWriteSingle(SEG_RIGHT >> 1, i2cReadSingle(SWITCH >> 1));
+    // Send the program to the device.
+    mDevice.startProgram(prog, "light:prog");
 }
 
 void LightSensor::burstResult(quint8 programID, quint32 timeStamp, const QByteArray& data)
 {
+    // If the burst result is not from this program, ignore the result.
     if(programID != 0 || data.size() != 4)
         return;
 
+    // Convert the results to an array of 16-bit integers.
     const uint16_t *values = (uint16_t*)data.constData();
 
+    // Calculate the visible light from: visible = IR - full
     uint16_t visible = values[1] - values[0];
 
-    emit sentLightSensorData(visible);
+    // Calculate a time offset for the first burst value.
+    if(mFirstStamp == 0)
+    {
+        // Set the connection time.
+        mConnectTime = QDateTime::currentDateTime();
+        mFirstStamp = timeStamp;
+    }
+
+    // Calculate the absolute time of the event.
+    QDateTime stamp = mConnectTime.addMSecs(timeStamp - mFirstStamp);
+
+    // Notify the graph about the new sensor data.
+    emit sensorData(stamp, visible);
 }
 
 void LightSensor::transactionComplete(const DeviceTransactionPtr& trans)
 {
-    if(trans->type() == DeviceTransaction::Transaction_Read && trans->userData().toString() == "light:ir")
+    // If the transaction was the burst program, make sure it programmed right.
+    if(trans->type() == DeviceTransaction::Transaction_BurstProg && trans->userData().toString() == "light:prog")
     {
-        if(trans->readData().size() == 2)
-        {
-            mIR = *((uint16_t*)trans->readData().constData());
-            //std::cout << "IR light data found: " << trans->id() << std::endl;
-        }
-        else
-            std::cerr << "Bad IR light data." << std::endl;
-    }
+        // Get the status code for the program.
+        uint8_t statusCode = *trans->readData().constData();
 
-    if(trans->type() == DeviceTransaction::Transaction_Read && trans->userData().toString() == "light:full")
-    {
-        if(trans->readData().size() == 2)
-        {
-            mFull = *((uint16_t*)trans->readData().constData());
-            //std::cout << "Full light data found: " << trans->id() << std::endl;
-
-            uint16_t visible = mFull - mIR;
-
-            //emit sendStringMain(tr("Light: %1\n").arg(visible));
-            emit sentLightSensorData(visible);
-        }
-        else
-        {
-            std::cerr << "Bad full light data." << std::endl;
-        }
+        // Print an error to the console if it failed to program.
+        if(statusCode != 0)
+            std::cerr << "Light sensor burst program failed with status code: " << (int)statusCode << std::endl;
     }
 }
 
-void LightSensor::read16(uint8_t reg, const QString& userData)
+void LightSensor::disconnected()
 {
-    mDevice.startWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg, 1), "light");
-    mDevice.startRead(TSL2561_ADDR_FLOAT, 2, userData);
-}
-
-void LightSensor::write8(uint8_t reg, uint8_t value)
-{
-    uint8_t data[2] = { reg, value };
-    mDevice.startWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)data, 2), "light");
-}
-
-void LightSensor::enable()
-{
-	write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
-		TSL2561_CONTROL_POWERON);
-}
-
-void LightSensor::disable()
-{
-    /*
-	write8(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
-		TSL2561_CONTROL_POWEROFF);
-    */
+    // Clear the first time stamp.
+    mFirstStamp = 0;
 }
