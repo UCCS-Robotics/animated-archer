@@ -2,6 +2,9 @@
 #define FAKESENSOR_H
 
 #include <QThread>
+#include <QtCore/QDateTime>
+#include <stdint.h>
+
 class MainWindow;
 
 class FakeSensor : public QThread
@@ -11,11 +14,13 @@ public:
     explicit FakeSensor(MainWindow *,QObject *parent = 0);
 
 signals:
-    void fakeSensorOutput(quint16);
+    void sensorData(const QDateTime& stamp, quint16);
 public slots:
     void update();
 private:
     void run();
+    uint32_t mFirstStamp;
+    QDateTime mConnectTime;
     MainWindow *mainwindow;
 
 };
