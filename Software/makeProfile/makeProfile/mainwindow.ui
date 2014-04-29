@@ -531,7 +531,7 @@
      <x>0</x>
      <y>0</y>
      <width>857</width>
-     <height>25</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuInterface">
@@ -545,6 +545,7 @@
     <addaction name="actionCompass"/>
     <addaction name="actionAltimiter"/>
     <addaction name="actionIR_Sensor"/>
+    <addaction name="actionFake_Sensor"/>
    </widget>
    <widget class="QMenu" name="menuInterface_2">
     <property name="title">
@@ -647,6 +648,11 @@
   <action name="actionOpen_Command_Window_2">
    <property name="text">
     <string>Open Command Window</string>
+   </property>
+  </action>
+  <action name="actionFake_Sensor">
+   <property name="text">
+    <string>Imaginary Sensor</string>
    </property>
   </action>
  </widget>

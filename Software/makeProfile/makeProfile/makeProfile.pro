@@ -24,11 +24,8 @@ SOURCES += main.cpp\
     crc32.c \
     devicethread.cpp \
     devicetransaction.cpp \
-<<<<<<< HEAD
-    fakesensor.cpp
-=======
+    fakesensor.cpp \
     burstprogram.cpp
->>>>>>> cd76d846993eebd419134ab171803f63da060a0b
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
@@ -40,12 +37,7 @@ HEADERS  += mainwindow.h \
     crc32.h \
     devicethread.h \
     devicetransaction.h \
-<<<<<<< HEAD
-    fakesensor.h
-=======
+    fakesensor.h /
     burstprogram.h
->>>>>>> cd76d846993eebd419134ab171803f63da060a0b
 
 FORMS    += mainwindow.ui
-
-LIBS += -lusb-1.0

@@ -26,13 +26,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));  // Used to emit an error from the device interface
 
     plot(); // Initialize plot
-    lightsensor->start();   // Start lightsensor thread
-    timer->start(1000); // Start sampling at 1 second
+//    lightsensor->start();   // Start lightsensor thread
+    fakesensor->start();
+
 
     // The following slider options must be initialized after starting the timer
     ui->horizontalSliderTScale->setValue(10);
     ui->horizontalSliderSpeed->setRange(1,100);
     ui->horizontalSliderSpeed->setValue(100);
+
+    timer->start(1000); // Start sampling at 1 second
 
 }
 
@@ -260,19 +263,18 @@ void MainWindow::on_radioConvert_clicked()
 
 // Import light sensor data (for testing purposes)
 void MainWindow::processLightSensorData(const QDateTime& stamp, quint16 data){
-    // Calculate running time
     elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
-    // Keep track of incoming data
     globalData.push_back(data);
-    // Add data to the first graph
+
+
+
     ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data);
-    // Set the xAxis value range, such that the screen 'pans' with the incoming data
+    ui->mainPlot->graph(0)->selectedPen().isSolid();
+
     set_xscreen();
-    // Update the plot with the new data
+
     ui->mainPlot->replot();
-    // Display incoming data in text box
     ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data)+"\n");
-    // Auto scroll text box
     ui->plainTextOutput->ensureCursorVisible();
 }
 
@@ -346,18 +348,17 @@ void MainWindow::on_checkBoxAutoScale_clicked(bool checked)
 }
 
 void MainWindow::set_xscreen(){
-    // Set xAxis scale data, what is displayed while scrolling
-    if(globalData.size()-ui->horizontalSliderTScale->value() > 0){
-        lsg0.resize(ui->horizontalSliderTScale->value());
-        for(int i = globalData.size()-ui->horizontalSliderTScale->value() - 1; i < lsg0.size(); i++){
-            lsg0[i] = globalData.at(i);
-        }
+    int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
+    lsg0.resize(tmp+1);
+    int j =0;
+    if(globalData.size()-tmp-2 > 0)
+    for(int i = globalData.size()-1; i > globalData.size()-2-tmp;i--){
+        lsg0[j++]=globalData.at(i);
     }
-    ui->mainPlot->rescaleAxes();
-    if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
-        ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0+1);
 
-    // Set yAxis such that the most variable information for the screen can be shown
+    ui->mainPlot->graph(0)->rescaleAxes();
+    if(elapsedTime/1000.0 > 10)
+        ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0);
     if(autoScale){
         QVector<double>::iterator it = std::max_element(lsg0.begin(), lsg0.end());
         QVector<double>::iterator it2 = std::min_element(lsg0.begin(), lsg0.end());
@@ -368,7 +369,7 @@ void MainWindow::set_xscreen(){
 // Set the xAxis scale
 void MainWindow::on_horizontalSliderTScale_valueChanged(int value)
 {
-    set_xscreen();
+    //set_xscreen();
     ui->mainPlot->xAxis->setScaleRatio(ui->mainPlot->yAxis,value);
     ui->mainPlot->replot();
 }
