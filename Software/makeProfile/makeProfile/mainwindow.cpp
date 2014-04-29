@@ -257,9 +257,9 @@ void MainWindow::on_radioConvert_clicked()
 }
 
 // Import light sensor data (for testing purposes)
-void MainWindow::processLightSensorData(quint16 data){
+void MainWindow::processLightSensorData(const QDateTime& stamp, quint16 data){
     // Calculate running time
-    elapsedTime = QDateTime::currentDateTime().toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
     // Keep track of incoming data
     globalData.push_back(data);
     // Add data to the first graph
