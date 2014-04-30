@@ -369,15 +369,18 @@ void MainWindow::set_xscreen(const QVector <double> &data){
     }
 }
 
+// Logic to take 2 ranges and find the minimum and maximum of the two, and return one range that encompasses both
 QCPRange MainWindow::find_axis_range_logic(const QCPRange &range1, const QCPRange &range2){
     double max, min;
 
+    // Find the max of both
     if(range1.maxRange>range2.maxRange){
         max=range1.maxRange;
     } else {
         max=range2.maxRange;
     }
 
+    // Find the min of both
     if(range1.minRange<range2.minRange){
         min=range1.minRange;
     } else {
@@ -387,27 +390,37 @@ QCPRange MainWindow::find_axis_range_logic(const QCPRange &range1, const QCPRang
     return QCPRange(min,max);
 }
 
+// Given a vector of data return the range
 QCPRange MainWindow::find_axis_range(QVector<double> data1){
+    // Find the max and min using iterators
     QVector<double>::iterator it = std::max_element(data1.begin(), data1.end());
     QVector<double>::iterator it2 = std::min_element(data1.begin(), data1.end());
+
+    // Return the min and max as a range with 5% extra space on top and bottom of screen
     return QCPRange(*it2-0.05*(*it-*it2)/2,*it+0.05*(*it-*it2)/2);
 }
 
+// Performs same function as find_axis_range with 1 vector, just finds the min and max of both so the window shows all
 QCPRange MainWindow::find_axis_range(const QVector<double>& data1,const QVector<double>& data2){
     QCPRange range1, range2;
 
+    // Min and max of both vectors
     range1=find_axis_range(data1);
     range2=find_axis_range(data2);
 
+    // Min and max of both ranges
     return find_axis_range_logic(range1,range2);
 }
 
+// Performs same function as find_axis_range with 1 and 2 vectors, just finds the min and max of each so the window shows all
 QCPRange MainWindow::find_axis_range(const QVector<double>& data1,const QVector<double>& data2,const QVector<double>& data3){
     QCPRange range1, range2;
 
+    // Min and max of all 3
     range1 = find_axis_range(data1,data2);
     range2 = find_axis_range(data3);
 
+    // Min and max of each range
     return find_axis_range_logic(range1,range2);
 }
 
