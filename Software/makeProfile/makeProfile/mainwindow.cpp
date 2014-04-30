@@ -263,15 +263,18 @@ void MainWindow::on_radioConvert_clicked()
 
 // Import light sensor data (for testing purposes)
 void MainWindow::processLightSensorData(const QDateTime& stamp, quint16 data){
-    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
-    globalData.push_back(data);
+    processAxisX(stamp,data);
+}
 
+void MainWindow::processAxisX(const QDateTime& stamp, quint16 data){
+    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    globalDataX.push_back(data);
 
 
     ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data);
     ui->mainPlot->graph(0)->selectedPen().isSolid();
 
-    set_xscreen();
+    set_xscreen(globalDataX);
 
     ui->mainPlot->replot();
     ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data)+"\n");
@@ -347,23 +350,65 @@ void MainWindow::on_checkBoxAutoScale_clicked(bool checked)
     autoScale = checked;
 }
 
-void MainWindow::set_xscreen(){
+void MainWindow::set_xscreen(const QVector <double> &data){
     int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
     lsg0.resize(tmp+1);
     int j =0;
-    if(globalData.size()-tmp-2 > 0)
-    for(int i = globalData.size()-1; i > globalData.size()-2-tmp;i--){
-        lsg0[j++]=globalData.at(i);
+    if(data.size()-tmp-2 > 0)
+    for(int i = data.size()-1; i > data.size()-2-tmp;i--){
+        lsg0[j++]=data.at(i);
     }
 
     ui->mainPlot->graph(0)->rescaleAxes();
-    if(elapsedTime/1000.0 > 10)
+
+    if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
         ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0);
+
     if(autoScale){
-        QVector<double>::iterator it = std::max_element(lsg0.begin(), lsg0.end());
-        QVector<double>::iterator it2 = std::min_element(lsg0.begin(), lsg0.end());
-        ui->mainPlot->yAxis->setRange(*it2-0.1*(*it-*it2)/2, *it+0.1*(*it-*it2)/2);
+        ui->mainPlot->yAxis->setRange(find_axis_range(lsg0));
     }
+}
+
+QCPRange MainWindow::find_axis_range_logic(const QCPRange &range1, const QCPRange &range2){
+    double max, min;
+
+    if(range1.maxRange>range2.maxRange){
+        max=range1.maxRange;
+    } else {
+        max=range2.maxRange;
+    }
+
+    if(range1.minRange<range2.minRange){
+        min=range1.minRange;
+    } else {
+        min=range2.minRange;
+    }
+
+    return QCPRange(min,max);
+}
+
+QCPRange MainWindow::find_axis_range(QVector<double> data1){
+    QVector<double>::iterator it = std::max_element(data1.begin(), data1.end());
+    QVector<double>::iterator it2 = std::min_element(data1.begin(), data1.end());
+    return QCPRange(*it2-0.05*(*it-*it2)/2,*it+0.05*(*it-*it2)/2);
+}
+
+QCPRange MainWindow::find_axis_range(const QVector<double>& data1,const QVector<double>& data2){
+    QCPRange range1, range2;
+
+    range1=find_axis_range(data1);
+    range2=find_axis_range(data2);
+
+    return find_axis_range_logic(range1,range2);
+}
+
+QCPRange MainWindow::find_axis_range(const QVector<double>& data1,const QVector<double>& data2,const QVector<double>& data3){
+    QCPRange range1, range2;
+
+    range1 = find_axis_range(data1,data2);
+    range2 = find_axis_range(data3);
+
+    return find_axis_range_logic(range1,range2);
 }
 
 // Set the xAxis scale

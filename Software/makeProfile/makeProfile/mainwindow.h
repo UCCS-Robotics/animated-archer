@@ -33,7 +33,11 @@ public:
 private:
     void sensor_switched();
     void plot();
-    void set_xscreen();
+    void set_xscreen(const QVector <double>&);
+    QCPRange find_axis_range(QVector<double>);
+    QCPRange find_axis_range(const QVector<double>&,const QVector<double>&);
+    QCPRange find_axis_range(const QVector<double>&,const QVector<double>&,const QVector<double>&);
+    QCPRange find_axis_range_logic(const QCPRange&,const QCPRange&);
 
 signals:
     void send_timer();
@@ -69,6 +73,9 @@ private slots:
     void on_actionConnect_Device_triggered();
 
     void processLightSensorData(const QDateTime&, quint16);
+
+    void processAxisX(const QDateTime&, quint16);
+
     void on_deviceError(const QString& msg);
 
     void on_pushButtonPauseResume_clicked(bool checked);
@@ -92,7 +99,7 @@ private:
     FakeSensor *fakesensor;
     int time;
     QDateTime currentTime;
-    QVector <double> lsg0, globalData;
+    QVector <double> lsg0, globalData, globalDataX;
     qint64 elapsedTime, pauseTime;
     bool timerStopped, autoScale;
 };
