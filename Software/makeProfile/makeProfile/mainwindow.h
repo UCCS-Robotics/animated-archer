@@ -125,6 +125,7 @@ private slots:
     void moveLegend();
     void graphClicked(QCPAbstractPlottable *plottable);
     void graphCopy();
+    void windowCopy();
 
 private:
     Ui::MainWindow *ui;

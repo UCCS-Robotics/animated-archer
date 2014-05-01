@@ -891,6 +891,7 @@ void MainWindow::contextMenuRequest(QPoint pos)
         menu->addAction("Move to bottom left", this, SLOT(moveLegend()))->setData((int)(Qt::AlignBottom|Qt::AlignLeft));
     } else  // general context menu on graphs requested
     {
+        menu->addAction("Copy as Image", this, SLOT(windowCopy()));
         if (ui->mainPlot->selectedGraphs().size() > 0)
             menu->addAction("Copy selected graph", this, SLOT(graphCopy()));
     }
@@ -938,4 +939,9 @@ void MainWindow::graphCopy(){
         }
         clipboard->setText(output);
     }
+}
+
+void MainWindow::windowCopy()
+{
+    clipboard->setPixmap(ui->mainPlot->toPixmap(800,600,1));
 }
