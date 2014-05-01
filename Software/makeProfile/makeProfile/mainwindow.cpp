@@ -739,6 +739,7 @@ void MainWindow::on_checkBoxData1_clicked(bool checked)
         ui->mainPlot->graph(0)->setVisible(false);
         ui->mainPlot->graph(0)->removeFromLegend();
     }
+    ui->mainPlot->replot();
 }
 
 void MainWindow::on_checkBoxData2_clicked(bool checked)
@@ -750,6 +751,7 @@ void MainWindow::on_checkBoxData2_clicked(bool checked)
         ui->mainPlot->graph(1)->setVisible(false);
         ui->mainPlot->graph(1)->removeFromLegend();
     }
+    ui->mainPlot->replot();
 }
 
 void MainWindow::on_checkBoxData3_clicked(bool checked)
@@ -761,6 +763,7 @@ void MainWindow::on_checkBoxData3_clicked(bool checked)
         ui->mainPlot->graph(2)->setVisible(false);
         ui->mainPlot->graph(2)->removeFromLegend();
     }
+    ui->mainPlot->replot();
 }
 
 void MainWindow::titleDoubleClick(QMouseEvent* event, QCPPlotTitle* title)
@@ -799,9 +802,15 @@ void MainWindow::legendDoubleClick(QCPLegend *legend, QCPAbstractLegendItem *ite
     {
         QCPPlottableLegendItem *plItem = qobject_cast<QCPPlottableLegendItem*>(item);
         bool ok;
-        QString newName = QInputDialog::getText(this, "QmainPlot example", "New graph name:", QLineEdit::Normal, plItem->plottable()->name(), &ok);
+        QString newName = QInputDialog::getText(this, "Rename Graph", "New graph name:", QLineEdit::Normal, plItem->plottable()->name(), &ok);
         if (ok)
         {
+            if(ui->mainPlot->plottable(0)==plItem->plottable())
+                ui->checkBoxData1->setText(newName);
+            else if(ui->mainPlot->plottable(1)==plItem->plottable())
+                ui->checkBoxData2->setText(newName);
+            else if(ui->mainPlot->plottable(2)==plItem->plottable())
+                ui->checkBoxData3->setText(newName);
             plItem->plottable()->setName(newName);
             ui->mainPlot->replot();
         }
