@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->spinBoxTime->setRange(1,100);
     ui->horizontalSliderSpeed->setRange(1,100);
     ui->horizontalSliderSpeed->setValue(100);
+    ui->mainToolBar->hide();
 
     on_actionFake_Sensor_triggered();
 }
@@ -463,9 +464,11 @@ void MainWindow::on_pushButtonPauseResume_clicked(bool checked)
 {
     if(checked){
         timer->stop();
+        ui->pushButtonPauseResume->setText("Resume");
     } else {
         timer->start(ui->spinBoxSpeed->value());
         currentTime = QDateTime::currentDateTime();
+        ui->pushButtonPauseResume->setText("Pause");
     }
 }
 
