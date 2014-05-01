@@ -93,6 +93,12 @@ private slots:
 
     void on_horizontalSliderSpeed_valueChanged(int value);
 
+    void on_spinBoxTime_valueChanged(int arg1);
+
+    void on_spinBoxData_valueChanged(int arg1);
+
+    void on_spinBoxSpeed_valueChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
     char sensor;

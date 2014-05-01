@@ -402,14 +402,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLCDNumber" name="lcdNumberScale">
-                 <property name="maximumSize">
-                  <size>
-                   <width>64</width>
-                   <height>24</height>
-                  </size>
-                 </property>
-                </widget>
+                <widget class="QSpinBox" name="spinBoxData"/>
                </item>
               </layout>
              </item>
@@ -443,14 +436,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLCDNumber" name="lcdNumberTScale">
-                 <property name="maximumSize">
-                  <size>
-                   <width>64</width>
-                   <height>24</height>
-                  </size>
-                 </property>
-                </widget>
+                <widget class="QSpinBox" name="spinBoxTime"/>
                </item>
               </layout>
              </item>
@@ -484,12 +470,12 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLCDNumber" name="lcdNumberSpeed">
-                 <property name="maximumSize">
-                  <size>
-                   <width>64</width>
-                   <height>24</height>
-                  </size>
+                <widget class="QSpinBox" name="spinBoxSpeed">
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>1000</number>
                  </property>
                 </widget>
                </item>
@@ -666,38 +652,5 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections>
-  <connection>
-   <sender>horizontalSliderScale</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>lcdNumberScale</receiver>
-   <slot>display(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>648</x>
-     <y>292</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>787</x>
-     <y>292</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>horizontalSliderTScale</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>lcdNumberTScale</receiver>
-   <slot>display(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>649</x>
-     <y>384</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>789</x>
-     <y>384</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

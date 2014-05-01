@@ -416,30 +416,42 @@ void MainWindow::set_xscreen(const QVector <double> &data){
 
 void MainWindow::set_xscreen(const QVector <double> &data1,const QVector <double> &data2,const QVector <double> &data3){
     int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
-    lsg0.resize(tmp+1);
-    lsg1.resize(tmp+1);
-    lsg2.resize(tmp+1);
     int j =0;
 
-    if(data1.size()-tmp-2 > 0)
-    for(int i = data1.size()-1; i > data1.size()-2-tmp;i--){
-        lsg0[j++]=data1.at(i);
+    if(data1.size()-tmp-2 > 0){
+        lsg0.resize(tmp+1);
+        for(int i = data1.size()-1; i > data1.size()-2-tmp;i--){
+            lsg0[j++]=data1.at(i);
+        }
+    }
+    else{
+        lsg0 = data1;
     }
 
     j = 0;
-    if(data2.size()-tmp-2 > 0)
-    for(int i = data2.size()-1; i > data2.size()-2-tmp;i--){
-        lsg1[j++]=data2.at(i);
+    if(data2.size()-tmp-2 > 0){
+        lsg1.resize(tmp+1);
+        for(int i = data2.size()-1; i > data2.size()-2-tmp;i--){
+            lsg1[j++]=data2.at(i);
+        }
+    }
+    else{
+        lsg1 = data2;
     }
 
     j = 0;
-    if(data3.size()-tmp-2 > 0)
-    for(int i = data3.size()-1; i > data3.size()-2-tmp;i--){
-        lsg2[j++]=data3.at(i);
+    if(data3.size()-tmp-2 > 0){
+        lsg2.resize(tmp+1);
+        for(int i = data3.size()-1; i > data3.size()-2-tmp;i--){
+            lsg2[j++]=data3.at(i);
+        }
+    }
+    else{
+        lsg2 = data3;
     }
 
     if(autoScale)
-        ui->mainPlot->graph(0)->rescaleAxes();
+        ui->mainPlot->rescaleAxes();
 
     if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
         ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0);
@@ -507,7 +519,7 @@ QCPRange MainWindow::find_axis_range(const QVector<double>& data1,const QVector<
 // Set the xAxis scale
 void MainWindow::on_horizontalSliderTScale_valueChanged(int value)
 {
-    //set_xscreen();
+    ui->spinBoxTime->setValue(value);
     ui->mainPlot->xAxis->setScaleRatio(refPlot->yAxis,value);
     if(ui->horizontalSliderScale->value()==0){
         refPlot->xAxis = ui->mainPlot->xAxis;
@@ -515,9 +527,15 @@ void MainWindow::on_horizontalSliderTScale_valueChanged(int value)
     ui->mainPlot->replot();
 }
 
+void MainWindow::on_spinBoxTime_valueChanged(int arg1)
+{
+    ui->horizontalSliderTScale->setValue(arg1);
+}
+
 // Scale the yaxis with respect to the xaxis
 void MainWindow::on_horizontalSliderScale_valueChanged(int value)
 {
+    ui->spinBoxData->setValue(value);
     ui->mainPlot->yAxis->setScaleRatio(refPlot->xAxis,value*5);
     if(ui->horizontalSliderTScale->value()==10){
         refPlot->yAxis = ui->mainPlot->yAxis;
@@ -525,11 +543,21 @@ void MainWindow::on_horizontalSliderScale_valueChanged(int value)
     ui->mainPlot->replot();
 }
 
+void MainWindow::on_spinBoxData_valueChanged(int arg1)
+{
+    ui->horizontalSliderScale->setValue(arg1);
+}
+
 // Change the sample speed
 void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
 {
-    ui->lcdNumberSpeed->display(value*10);
+    ui->spinBoxSpeed->setValue(value*10);
     if(timer->isActive())
         timer->stop();
     timer->start(value*10);
+}
+
+void MainWindow::on_spinBoxSpeed_valueChanged(int arg1)
+{
+    ui->horizontalSliderSpeed->setValue(arg1);
 }
