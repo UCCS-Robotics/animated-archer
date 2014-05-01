@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QDateTime>
+#include <QClipboard>
+#include <QList>
 #include "qcustomplot.h"
 #include "device.h"
 #include "sensorthread.h"
@@ -113,6 +115,17 @@ private slots:
 
     void on_actionFake_Sensor_triggered();
 
+    void titleDoubleClick(QMouseEvent *event, QCPPlotTitle *title);
+    void axisLabelDoubleClick(QCPAxis* axis, QCPAxis::SelectablePart part);
+    void legendDoubleClick(QCPLegend* legend, QCPAbstractLegendItem* item);
+    void selectionChanged();
+    void mousePress();
+    void mouseWheel();
+    void contextMenuRequest(QPoint pos);
+    void moveLegend();
+    void graphClicked(QCPAbstractPlottable *plottable);
+    void graphCopy();
+
 private:
     Ui::MainWindow *ui;
     char sensor;
@@ -126,6 +139,7 @@ private:
     qint64 elapsedTime, pauseTime;
     bool timerStopped, autoScale;
     QCustomPlot *refPlot;
+    QClipboard *clipboard;
 };
 
 #endif // MAINWINDOW_H
