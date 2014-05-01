@@ -13,11 +13,11 @@ void FakeSensor::update(){
     QDateTime stamp = QDateTime::currentDateTime();
 
     // Notify the graph about the new sensor data.
-    emit sensorData(stamp, rand()%1000);
+    emit sensorData(stamp, rand()%1000, rand()%1000, rand()%1000);
 }
 
 void FakeSensor::run(){
-    connect(this,SIGNAL(sensorData(QDateTime,quint16)),mainwindow,SLOT(processAxisX(QDateTime,quint16)));
+    connect(this,SIGNAL(sensorData(QDateTime,quint16,quint16,quint16)),mainwindow,SLOT(processSensor(QDateTime,quint16,quint16,quint16)));
     connect(mainwindow,SIGNAL(send_timer()),this,SLOT(update()));
     exec();
 }

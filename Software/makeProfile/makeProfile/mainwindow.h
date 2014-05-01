@@ -34,6 +34,7 @@ private:
     void sensor_switched();
     void plot();
     void set_xscreen(const QVector <double>&);
+    void set_xscreen(const QVector <double>&,const QVector <double>&,const QVector <double>&);
     QCPRange find_axis_range(QVector<double>);
     QCPRange find_axis_range(const QVector<double>&,const QVector<double>&);
     QCPRange find_axis_range(const QVector<double>&,const QVector<double>&,const QVector<double>&);
@@ -76,6 +77,8 @@ private slots:
 
     void processAxisX(const QDateTime&, quint16);
 
+    void processSensor(const QDateTime&, quint16, quint16, quint16);
+
     void on_deviceError(const QString& msg);
 
     void on_pushButtonPauseResume_clicked(bool checked);
@@ -99,9 +102,10 @@ private:
     FakeSensor *fakesensor;
     int time;
     QDateTime currentTime;
-    QVector <double> lsg0, globalData, globalDataX;
+    QVector <double> lsg0, lsg1, lsg2, globalData, globalData1, globalData2, globalData3;
     qint64 elapsedTime, pauseTime;
     bool timerStopped, autoScale;
+    QCustomPlot *refPlot;
 };
 
 #endif // MAINWINDOW_H

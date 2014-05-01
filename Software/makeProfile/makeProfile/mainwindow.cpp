@@ -268,16 +268,35 @@ void MainWindow::processLightSensorData(const QDateTime& stamp, quint16 data){
 
 void MainWindow::processAxisX(const QDateTime& stamp, quint16 data){
     elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
-    globalDataX.push_back(data);
+    globalData1.push_back(data);
 
 
     ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data);
     ui->mainPlot->graph(0)->selectedPen().isSolid();
 
-    set_xscreen(globalDataX);
+    set_xscreen(globalData1);
 
     ui->mainPlot->replot();
     ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data)+"\n");
+    ui->plainTextOutput->ensureCursorVisible();
+}
+
+void MainWindow::processSensor(const QDateTime &stamp, quint16 data1, quint16 data2, quint16 data3){
+    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    globalData1.push_back(data1);
+    globalData2.push_back(data2);
+    globalData3.push_back(data3);
+
+
+    ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data1);
+    ui->mainPlot->graph(1)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data2);
+    ui->mainPlot->graph(2)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data3);
+
+    set_xscreen(globalData1, globalData2, globalData3);
+
+
+    ui->mainPlot->replot();
+    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data1)+"\n");
     ui->plainTextOutput->ensureCursorVisible();
 }
 
@@ -292,11 +311,35 @@ void MainWindow::plot(){
     autoScale = true;  // Autoscale plot
     currentTime = QDateTime::currentDateTime();
 
+    ui->mainPlot->setLocale(QLocale(QLocale::English, QLocale::UnitedStates));
+    ui->mainPlot->legend->setVisible(true);
+    QFont legendFont = font();  // start out with MainWindow's font..
+    legendFont.setPointSize(9); // and make a bit smaller for legend
+    ui->mainPlot->legend->setFont(legendFont);
+    ui->mainPlot->legend->setBrush(QBrush(QColor(255,255,255,230)));
+    // by default, the legend is in the inset layout of the main axis rect. So this is how we access it to change legend placement:
+    ui->mainPlot->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignTop |Qt::AlignLeft);
+
     // add new graph and set style
-    ui->mainPlot->addGraph();
-    ui->mainPlot->graph(0)->setPen(QPen(Qt::blue)); // line color blue for first graph
+    // line for first graphs
     // Adds circles at each datapoint
-    ui->mainPlot->graph(0)->setScatterStyle(ui->mainPlot->graph(0)->scatterStyle().ssCircle);
+    ui->mainPlot->addGraph();
+    ui->mainPlot->graph(0)->setPen(QPen(Qt::blue));
+    ui->mainPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 5));
+    ui->mainPlot->graph(0)->setLineStyle(QCPGraph::lsLine);
+    ui->mainPlot->graph(0)->setName("Axis 1");
+
+    ui->mainPlot->addGraph();
+    ui->mainPlot->graph(1)->setPen(QPen(Qt::red));
+    ui->mainPlot->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 5));
+    ui->mainPlot->graph(1)->setLineStyle(QCPGraph::lsLine);
+    ui->mainPlot->graph(1)->setName("Axis 2");
+
+    ui->mainPlot->addGraph();
+    ui->mainPlot->graph(2)->setPen(QPen(Qt::green));
+    ui->mainPlot->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 5));
+    ui->mainPlot->graph(2)->setLineStyle(QCPGraph::lsLine);
+    ui->mainPlot->graph(2)->setName("Axis 3");
 
     // configure right and top axis to show ticks but no labels:
     // (see QCPAxisRect::setupFullAxesBox for a quicker method to do this)
@@ -304,6 +347,7 @@ void MainWindow::plot(){
     ui->mainPlot->xAxis2->setTickLabels(false);
     ui->mainPlot->yAxis2->setVisible(true);
     ui->mainPlot->yAxis2->setTickLabels(false);
+
     // make left and bottom axes always transfer their ranges to right and top axes:
     connect(ui->mainPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->xAxis2, SLOT(setRange(QCPRange)));
     connect(ui->mainPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->mainPlot->yAxis2, SLOT(setRange(QCPRange)));
@@ -316,6 +360,14 @@ void MainWindow::plot(){
     // Set axis display type
     ui->mainPlot->xAxis->setDateTimeFormat("mm:ss:zzz");
     ui->mainPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
+
+    ui->mainPlot->plotLayout()->insertRow(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Live Data"));
+
+    ui->mainPlot->xAxis->setLabel("Time (sec)");
+    ui->mainPlot->yAxis->setLabel("Data");
+
+    refPlot = ui->mainPlot;
 }
 
 void MainWindow::on_actionConnect_Device_triggered()
@@ -336,13 +388,6 @@ void MainWindow::on_pushButtonPauseResume_clicked(bool checked)
 // Emit timer expiration to sensors to sample and update plot
 void MainWindow::on_timerExpire(){
     emit send_timer();
-}
-
-// Scale the yaxis with respect to the xaxis
-void MainWindow::on_horizontalSliderScale_valueChanged(int value)
-{
-    ui->mainPlot->yAxis->setScaleRatio(ui->mainPlot->xAxis,value*5);
-    ui->mainPlot->replot();
 }
 
 void MainWindow::on_checkBoxAutoScale_clicked(bool checked)
@@ -369,22 +414,57 @@ void MainWindow::set_xscreen(const QVector <double> &data){
     }
 }
 
+void MainWindow::set_xscreen(const QVector <double> &data1,const QVector <double> &data2,const QVector <double> &data3){
+    int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
+    lsg0.resize(tmp+1);
+    lsg1.resize(tmp+1);
+    lsg2.resize(tmp+1);
+    int j =0;
+
+    if(data1.size()-tmp-2 > 0)
+    for(int i = data1.size()-1; i > data1.size()-2-tmp;i--){
+        lsg0[j++]=data1.at(i);
+    }
+
+    j = 0;
+    if(data2.size()-tmp-2 > 0)
+    for(int i = data2.size()-1; i > data2.size()-2-tmp;i--){
+        lsg1[j++]=data2.at(i);
+    }
+
+    j = 0;
+    if(data3.size()-tmp-2 > 0)
+    for(int i = data3.size()-1; i > data3.size()-2-tmp;i--){
+        lsg2[j++]=data3.at(i);
+    }
+
+    if(autoScale)
+        ui->mainPlot->graph(0)->rescaleAxes();
+
+    if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
+        ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0);
+
+    if(autoScale){
+        ui->mainPlot->yAxis->setRange(find_axis_range(lsg0,lsg1,lsg2));
+    }
+}
+
 // Logic to take 2 ranges and find the minimum and maximum of the two, and return one range that encompasses both
 QCPRange MainWindow::find_axis_range_logic(const QCPRange &range1, const QCPRange &range2){
     double max, min;
 
     // Find the max of both
-    if(range1.maxRange>range2.maxRange){
-        max=range1.maxRange;
+    if(range1.upper>range2.upper){
+        max=range1.upper;
     } else {
-        max=range2.maxRange;
+        max=range2.upper;
     }
 
     // Find the min of both
-    if(range1.minRange<range2.minRange){
-        min=range1.minRange;
+    if(range1.lower<range2.lower){
+        min=range1.lower;
     } else {
-        min=range2.minRange;
+        min=range2.lower;
     }
 
     return QCPRange(min,max);
@@ -428,7 +508,20 @@ QCPRange MainWindow::find_axis_range(const QVector<double>& data1,const QVector<
 void MainWindow::on_horizontalSliderTScale_valueChanged(int value)
 {
     //set_xscreen();
-    ui->mainPlot->xAxis->setScaleRatio(ui->mainPlot->yAxis,value);
+    ui->mainPlot->xAxis->setScaleRatio(refPlot->yAxis,value);
+    if(ui->horizontalSliderScale->value()==0){
+        refPlot->xAxis = ui->mainPlot->xAxis;
+    }
+    ui->mainPlot->replot();
+}
+
+// Scale the yaxis with respect to the xaxis
+void MainWindow::on_horizontalSliderScale_valueChanged(int value)
+{
+    ui->mainPlot->yAxis->setScaleRatio(refPlot->xAxis,value*5);
+    if(ui->horizontalSliderTScale->value()==10){
+        refPlot->yAxis = ui->mainPlot->yAxis;
+    }
     ui->mainPlot->replot();
 }
 

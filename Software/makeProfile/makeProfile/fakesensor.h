@@ -14,7 +14,7 @@ public:
     explicit FakeSensor(MainWindow *,QObject *parent = 0);
 
 signals:
-    void sensorData(const QDateTime& stamp, quint16);
+    void sensorData(const QDateTime& stamp, quint16, quint16, quint16);
 public slots:
     void update();
 private:
