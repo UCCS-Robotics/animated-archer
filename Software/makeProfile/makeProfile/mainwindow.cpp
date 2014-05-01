@@ -32,6 +32,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // The following slider options must be initialized after starting the timer
     ui->horizontalSliderTScale->setValue(10);
+    ui->horizontalSliderTScale->setRange(1,100);
+    ui->spinBoxTime->setRange(1,100);
     ui->horizontalSliderSpeed->setRange(1,100);
     ui->horizontalSliderSpeed->setValue(100);
 
@@ -281,7 +283,38 @@ void MainWindow::processAxisX(const QDateTime& stamp, quint16 data){
     ui->plainTextOutput->ensureCursorVisible();
 }
 
-void MainWindow::plotSensor(const QDateTime &stamp, quint16 data1, quint16 data2, quint16 data3){
+void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1){
+    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    globalData1.push_back(data1);
+
+    ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data1);
+
+    set_xscreen(globalData1);
+
+
+    ui->mainPlot->replot();
+    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + ":\n1)\t" + QString::number(data1)+"\n");
+    ui->plainTextOutput->ensureCursorVisible();
+}
+
+void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1, quint16 data2){
+    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    globalData1.push_back(data1);
+    globalData2.push_back(data2);
+
+
+    ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data1);
+    ui->mainPlot->graph(1)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data2);
+
+    set_xscreen(globalData1, globalData2);
+
+
+    ui->mainPlot->replot();
+    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + ":\n1)\t" + QString::number(data1)+"\n2)\t" + QString::number(data2)+"\n" );
+    ui->plainTextOutput->ensureCursorVisible();
+}
+
+void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1, quint16 data2, quint16 data3){
     elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
     globalData1.push_back(data1);
     globalData2.push_back(data2);
@@ -397,22 +430,68 @@ void MainWindow::on_checkBoxAutoScale_clicked(bool checked)
     ui->mainPlot->replot();
 }
 
-void MainWindow::set_xscreen(const QVector <double> &data){
+void MainWindow::set_xscreen(const QVector <double> &data1){
     int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
-    lsg0.resize(tmp+1);
     int j =0;
-    if(data.size()-tmp-2 > 0)
-        for(int i = data.size()-1; i > data.size()-2-tmp;i--){
-            lsg0[j++]=data.at(i);
-        }
 
-    ui->mainPlot->graph(0)->rescaleAxes();
+    if(data1.size()-tmp-2 > 0){
+        lsg0.resize(tmp+1);
+        for(int i = data1.size()-1; i > data1.size()-2-tmp;i--){
+            lsg0[j++]=data1.at(i);
+        }
+    }
+    else{
+        lsg0 = data1;
+    }
+
+    ui->mainPlot->rescaleAxes();
+
+    if(!autoScale)
+        ui->mainPlot->yAxis->setScaleRatio(refPlot->xAxis,ui->spinBoxData->value()*5);
 
     if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
         ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0);
 
     if(autoScale){
         ui->mainPlot->yAxis->setRange(find_axis_range(lsg0));
+    }
+}
+
+void MainWindow::set_xscreen(const QVector <double> &data1,const QVector <double> &data2){
+    int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
+    int j =0;
+
+    if(data1.size()-tmp-2 > 0){
+        lsg0.resize(tmp+1);
+        for(int i = data1.size()-1; i > data1.size()-2-tmp;i--){
+            lsg0[j++]=data1.at(i);
+        }
+    }
+    else{
+        lsg0 = data1;
+    }
+
+    j = 0;
+    if(data2.size()-tmp-2 > 0){
+        lsg1.resize(tmp+1);
+        for(int i = data2.size()-1; i > data2.size()-2-tmp;i--){
+            lsg1[j++]=data2.at(i);
+        }
+    }
+    else{
+        lsg1 = data2;
+    }
+
+    ui->mainPlot->rescaleAxes();
+
+    if(!autoScale)
+        ui->mainPlot->yAxis->setScaleRatio(refPlot->xAxis,ui->spinBoxData->value()*5);
+
+    if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
+        ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0);
+
+    if(autoScale){
+        ui->mainPlot->yAxis->setRange(find_axis_range(lsg0,lsg1,lsg2));
     }
 }
 
@@ -564,5 +643,38 @@ void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
 
 void MainWindow::on_spinBoxSpeed_valueChanged(int arg1)
 {
-    ui->horizontalSliderSpeed->setValue(arg1);
+    ui->horizontalSliderSpeed->setValue(arg1/10);
+}
+
+void MainWindow::on_checkBoxData1_clicked(bool checked)
+{
+    if(checked){
+        ui->mainPlot->graph(0)->setVisible(true);
+        ui->mainPlot->graph(0)->addToLegend();
+    } else {
+        ui->mainPlot->graph(0)->setVisible(false);
+        ui->mainPlot->graph(0)->removeFromLegend();
+    }
+}
+
+void MainWindow::on_checkBoxData2_clicked(bool checked)
+{
+    if(checked){
+        ui->mainPlot->graph(1)->setVisible(true);
+        ui->mainPlot->graph(1)->addToLegend();
+    } else {
+        ui->mainPlot->graph(1)->setVisible(false);
+        ui->mainPlot->graph(1)->removeFromLegend();
+    }
+}
+
+void MainWindow::on_checkBoxData3_clicked(bool checked)
+{
+    if(checked){
+        ui->mainPlot->graph(2)->setVisible(true);
+        ui->mainPlot->graph(2)->addToLegend();
+    } else {
+        ui->mainPlot->graph(2)->setVisible(false);
+        ui->mainPlot->graph(2)->removeFromLegend();
+    }
 }

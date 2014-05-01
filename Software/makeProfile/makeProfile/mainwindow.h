@@ -34,6 +34,7 @@ private:
     void sensor_switched();
     void plot();
     void set_xscreen(const QVector <double>&);
+    void set_xscreen(const QVector <double>&,const QVector <double>&);
     void set_xscreen(const QVector <double>&,const QVector <double>&,const QVector <double>&);
     QCPRange find_axis_range(QVector<double>);
     QCPRange find_axis_range(const QVector<double>&,const QVector<double>&);
@@ -77,7 +78,11 @@ private slots:
 
     void processAxisX(const QDateTime&, quint16);
 
-    void plotSensor(const QDateTime&, quint16, quint16, quint16);
+    void recordSensor(const QDateTime&, quint16, quint16, quint16);
+
+    void recordSensor(const QDateTime&, quint16, quint16);
+
+    void recordSensor(const QDateTime&, quint16);
 
     void on_deviceError(const QString& msg);
 
@@ -98,6 +103,12 @@ private slots:
     void on_spinBoxData_valueChanged(int arg1);
 
     void on_spinBoxSpeed_valueChanged(int arg1);
+
+    void on_checkBoxData1_clicked(bool checked);
+
+    void on_checkBoxData2_clicked(bool checked);
+
+    void on_checkBoxData3_clicked(bool checked);
 
 private:
     Ui::MainWindow *ui;
