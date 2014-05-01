@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));  // Used to emit an error from the device interface
 
     plot(); // Initialize plot
-//    lightsensor->start();   // Start lightsensor thread
+    //    lightsensor->start();   // Start lightsensor thread
     fakesensor->start();
 
 
@@ -281,7 +281,7 @@ void MainWindow::processAxisX(const QDateTime& stamp, quint16 data){
     ui->plainTextOutput->ensureCursorVisible();
 }
 
-void MainWindow::processSensor(const QDateTime &stamp, quint16 data1, quint16 data2, quint16 data3){
+void MainWindow::plotSensor(const QDateTime &stamp, quint16 data1, quint16 data2, quint16 data3){
     elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
     globalData1.push_back(data1);
     globalData2.push_back(data2);
@@ -296,7 +296,7 @@ void MainWindow::processSensor(const QDateTime &stamp, quint16 data1, quint16 da
 
 
     ui->mainPlot->replot();
-    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + " " + QString::number(data1)+"\n");
+    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + ":\n1)\t" + QString::number(data1)+"\n2)\t" + QString::number(data2)+"\n3)\t" + QString::number(data3)+ "\n" );
     ui->plainTextOutput->ensureCursorVisible();
 }
 
@@ -393,6 +393,8 @@ void MainWindow::on_timerExpire(){
 void MainWindow::on_checkBoxAutoScale_clicked(bool checked)
 {
     autoScale = checked;
+    ui->mainPlot->yAxis->setScaleRatio(refPlot->xAxis,ui->spinBoxData->value()*5);
+    ui->mainPlot->replot();
 }
 
 void MainWindow::set_xscreen(const QVector <double> &data){
@@ -400,9 +402,9 @@ void MainWindow::set_xscreen(const QVector <double> &data){
     lsg0.resize(tmp+1);
     int j =0;
     if(data.size()-tmp-2 > 0)
-    for(int i = data.size()-1; i > data.size()-2-tmp;i--){
-        lsg0[j++]=data.at(i);
-    }
+        for(int i = data.size()-1; i > data.size()-2-tmp;i--){
+            lsg0[j++]=data.at(i);
+        }
 
     ui->mainPlot->graph(0)->rescaleAxes();
 
@@ -450,8 +452,11 @@ void MainWindow::set_xscreen(const QVector <double> &data1,const QVector <double
         lsg2 = data3;
     }
 
-    if(autoScale)
-        ui->mainPlot->rescaleAxes();
+
+    ui->mainPlot->rescaleAxes();
+
+    if(!autoScale)
+        ui->mainPlot->yAxis->setScaleRatio(refPlot->xAxis,ui->spinBoxData->value()*5);
 
     if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
         ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0);

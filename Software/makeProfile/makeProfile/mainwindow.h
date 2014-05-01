@@ -77,7 +77,7 @@ private slots:
 
     void processAxisX(const QDateTime&, quint16);
 
-    void processSensor(const QDateTime&, quint16, quint16, quint16);
+    void plotSensor(const QDateTime&, quint16, quint16, quint16);
 
     void on_deviceError(const QString& msg);
 

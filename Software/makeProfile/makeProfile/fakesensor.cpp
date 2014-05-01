@@ -17,7 +17,7 @@ void FakeSensor::update(){
 }
 
 void FakeSensor::run(){
-    connect(this,SIGNAL(sensorData(QDateTime,quint16,quint16,quint16)),mainwindow,SLOT(processSensor(QDateTime,quint16,quint16,quint16)));
+    connect(this,SIGNAL(sensorData(QDateTime,quint16,quint16,quint16)),mainwindow,SLOT(plotSensor(QDateTime,quint16,quint16,quint16)));
     connect(mainwindow,SIGNAL(send_timer()),this,SLOT(update()));
     exec();
 }
