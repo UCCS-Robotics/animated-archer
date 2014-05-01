@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this);
     lightsensor = new SensorThread(this);
     fakesensor = new FakeSensor(this);
+    elapsedTime = 0;
 
     connect(timer, SIGNAL(timeout()),this,SLOT(on_timerExpire()));  // Used to update plot
     connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));  // Used to emit an error from the device interface
@@ -37,8 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->horizontalSliderSpeed->setRange(1,100);
     ui->horizontalSliderSpeed->setValue(100);
 
-    timer->start(1000); // Start sampling at 1 second
-
+    on_actionFake_Sensor_triggered();
 }
 
 MainWindow::~MainWindow()
@@ -106,6 +106,8 @@ void MainWindow::on_actionUS_Sensor_triggered()
     ui->labelRed->hide();
     ui->checkBoxData3->hide();
     ui->labelGreen->hide();
+    ui->mainPlot->plotLayout()->removeAt(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Ultrasonic Live Data"));
 }
 
 // Accelerometer
@@ -119,6 +121,8 @@ void MainWindow::on_actionAccelerometer_triggered()
     ui->labelRed->show();
     ui->checkBoxData3->show();
     ui->labelGreen->show();
+    ui->mainPlot->plotLayout()->removeAt(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Accelerometer Live Data"));
 }
 
 // Gyroscope
@@ -132,6 +136,8 @@ void MainWindow::on_actionGyroscope_triggered()
     ui->labelRed->show();
     ui->checkBoxData3->show();
     ui->labelGreen->show();
+    ui->mainPlot->plotLayout()->removeAt(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Gyroscope Live Data"));
 }
 
 // Global Positioning System
@@ -145,6 +151,8 @@ void MainWindow::on_actionGPS_triggered()
     ui->labelRed->show();
     ui->checkBoxData3->show();
     ui->labelGreen->show();
+    ui->mainPlot->plotLayout()->removeAt(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "GPS Live Data"));
 }
 
 // Magnetometer
@@ -158,6 +166,8 @@ void MainWindow::on_actionCompass_triggered()
     ui->labelRed->hide();
     ui->checkBoxData3->hide();
     ui->labelGreen->hide();
+    ui->mainPlot->plotLayout()->removeAt(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Compass Live Data"));
 }
 
 // Barometer
@@ -171,6 +181,8 @@ void MainWindow::on_actionAltimiter_triggered()
     ui->labelRed->hide();
     ui->checkBoxData3->hide();
     ui->labelGreen->hide();
+    ui->mainPlot->plotLayout()->removeAt(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Altimiter Live Data"));
 }
 
 // Infrared Sensor
@@ -184,6 +196,31 @@ void MainWindow::on_actionIR_Sensor_triggered()
     ui->labelRed->hide();
     ui->checkBoxData3->hide();
     ui->labelGreen->hide();
+    ui->mainPlot->plotLayout()->removeAt(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Infra-Red Live Data"));
+}
+
+void MainWindow::on_actionFake_Sensor_triggered()
+{
+    if(sensor != FAKE){
+        globalData1.resize(0);
+        globalData2.resize(0);
+        globalData3.resize(0);
+        ui->mainPlot->graph(0)->clearData();
+        ui->mainPlot->graph(1)->clearData();
+        ui->mainPlot->graph(2)->clearData();
+    }
+    sensor = FAKE;
+    sensor_switched();
+    ui->checkBoxData1->show();
+    ui->labelBlue->show();
+    ui->checkBoxData2->show();
+    ui->labelRed->show();
+    ui->checkBoxData3->show();
+    ui->labelGreen->show();
+    ui->mainPlot->plotLayout()->removeAt(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Fake Live Data"));
+    timer->start(1000); // Start sampling at 1 second
 }
 
 // Raw data (not passed through transfer function)
@@ -211,6 +248,10 @@ void MainWindow::on_radioRaw_clicked()
 
     case INFRARED:
         ui->mainPlot->yAxis->setLabel("Raw PWM");
+        break;
+
+    case FAKE:
+        ui->mainPlot->yAxis->setLabel("Fake Raw");
         break;
     default:
         if(!ui->radioRaw->isChecked())
@@ -255,6 +296,11 @@ void MainWindow::on_radioConvert_clicked()
     case INFRARED:
         ui->mainPlot->yAxis->setLabel("Distance (mm)");
         break;
+
+    case FAKE:
+        ui->mainPlot->yAxis->setLabel("Fake Converted Data");
+        break;
+
     default:
         if(!ui->radioRaw->isChecked())
             ui->radioRaw->click();
@@ -269,7 +315,8 @@ void MainWindow::processLightSensorData(const QDateTime& stamp, quint16 data){
 }
 
 void MainWindow::processAxisX(const QDateTime& stamp, quint16 data){
-    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    elapsedTime += stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    currentTime = QDateTime::currentDateTime();
     globalData1.push_back(data);
 
 
@@ -284,7 +331,8 @@ void MainWindow::processAxisX(const QDateTime& stamp, quint16 data){
 }
 
 void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1){
-    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    elapsedTime += stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    currentTime = QDateTime::currentDateTime();
     globalData1.push_back(data1);
 
     ui->mainPlot->graph(0)->addData(QVector<double>() << elapsedTime/1000.0, QVector<double>() << data1);
@@ -298,7 +346,8 @@ void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1){
 }
 
 void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1, quint16 data2){
-    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    elapsedTime += stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    currentTime = QDateTime::currentDateTime();
     globalData1.push_back(data1);
     globalData2.push_back(data2);
 
@@ -315,7 +364,8 @@ void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1, quint16 dat
 }
 
 void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1, quint16 data2, quint16 data3){
-    elapsedTime = stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    elapsedTime += stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
+    currentTime = QDateTime::currentDateTime();
     globalData1.push_back(data1);
     globalData2.push_back(data2);
     globalData3.push_back(data3);
@@ -414,7 +464,8 @@ void MainWindow::on_pushButtonPauseResume_clicked(bool checked)
     if(checked){
         timer->stop();
     } else {
-        timer->start(ui->horizontalSliderSpeed->value());
+        timer->start(ui->spinBoxSpeed->value());
+        currentTime = QDateTime::currentDateTime();
     }
 }
 

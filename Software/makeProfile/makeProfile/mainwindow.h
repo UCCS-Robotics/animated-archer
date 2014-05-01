@@ -17,6 +17,7 @@
 #define COMPASS 6
 #define ALTIMITER 7
 #define INFRARED 8
+#define FAKE 99
 
 namespace Ui {
 class MainWindow;
@@ -110,6 +111,8 @@ private slots:
 
     void on_checkBoxData3_clicked(bool checked);
 
+    void on_actionFake_Sensor_triggered();
+
 private:
     Ui::MainWindow *ui;
     char sensor;
@@ -118,7 +121,7 @@ private:
     SensorThread *lightsensor;
     FakeSensor *fakesensor;
     int time;
-    QDateTime currentTime;
+    QDateTime currentTime, currTime, nextTime;
     QVector <double> lsg0, lsg1, lsg2, globalData, globalData1, globalData2, globalData3;
     qint64 elapsedTime, pauseTime;
     bool timerStopped, autoScale;
