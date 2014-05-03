@@ -133,6 +133,8 @@ private slots:
 
     void on_actionLight_Sensor_triggered();
 
+    void on_pushButtonRecord_clicked();
+
 private:
     Ui::MainWindow *ui;
     char sensor;

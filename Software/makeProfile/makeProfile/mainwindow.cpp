@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->radioFilter->click();
     ui->label->hide();
     ui->label_2->hide();
+    ui->pushButtonRecord->setDisabled(true);
     QWidget::setWindowTitle("Live Data");
 
     // Initialize pointers
@@ -533,10 +534,12 @@ void MainWindow::on_pushButtonPauseResume_clicked(bool checked)
     if(checked){
         timer->stop();
         ui->pushButtonPauseResume->setText("Resume");
+        ui->pushButtonRecord->setEnabled(true);
     } else {
         timer->start(ui->spinBoxSpeed->value());
         currentTime = QDateTime::currentDateTime();
         ui->pushButtonPauseResume->setText("Pause");
+        ui->pushButtonRecord->setDisabled(true);
     }
 }
 
@@ -1011,4 +1014,34 @@ void MainWindow::windowCopy()
 {
     clipboard->setPixmap(ui->mainPlot->toPixmap(800,600,1));
     ui->statusBar->showMessage(QString("Current window copied to clipboard."),2000);
+}
+
+void MainWindow::on_pushButtonRecord_clicked()
+{
+    QString filename = QFileDialog::getSaveFileName(this, "DialogTitle", "filename.csv", "CSV files (*.csv);;Zip files (*.zip, *.7z)", 0, 0); // getting the filename (full path)
+    QFile data(filename);
+    if(data.open(QFile::WriteOnly |QFile::Truncate))
+    {
+        QTextStream output(&data);
+        output << "time\t";
+        if(!ui->checkBoxData1->isHidden())
+            output << ui->checkBoxData1->text();
+        if(!ui->checkBoxData2->isHidden())
+            output << "\t" << ui->checkBoxData2->text();
+        if(!ui->checkBoxData3->isHidden())
+            output << "\t" << ui->checkBoxData3->text();
+        output << "\n";
+
+        for(int i = 0; i < globalData.size(); i++){
+            output << globalData.at(i);
+            if(!ui->checkBoxData1->isHidden())
+                output << "\t" << globalData1.at(i);
+            if(!ui->checkBoxData2->isHidden())
+                output << "\t" << globalData2.at(i);
+            if(!ui->checkBoxData3->isHidden())
+                output << "\t" << globalData3.at(i);
+            output << "\n";
+        }
+        data.close();
+    }
 }
