@@ -763,7 +763,7 @@ void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
     ui->spinBoxSpeed->setValue(value*10);
     if(timer->isActive())
         timer->stop();
-    if(!ui->pushButtonPauseResume)
+    if(!ui->pushButtonPauseResume->isChecked())
         timer->start(value*10);
 }
 
