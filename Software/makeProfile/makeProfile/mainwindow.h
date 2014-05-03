@@ -45,6 +45,7 @@ private:
     QCPRange find_axis_range(const QVector<double>&,const QVector<double>&,const QVector<double>&);
     QCPRange find_axis_range_logic(const QCPRange&,const QCPRange&);
     void stop_all_sensors();
+    void sampleData();
 
 signals:
     void send_timer();
@@ -135,9 +136,11 @@ private slots:
 
     void on_pushButtonRecord_clicked();
 
+    void on_pushButtonSample_clicked();
+
 private:
     Ui::MainWindow *ui;
-    char sensor;
+    char sensor, usedAxes;
     Device *usb;
     QTimer *timer;
     SensorThread *lightsensor;
@@ -145,8 +148,8 @@ private:
     int time;
     QDateTime currentTime, currTime, nextTime;
     QVector <double> lsg0, lsg1, lsg2, globalData, globalData1, globalData2, globalData3;
-    qint64 elapsedTime, pauseTime;
-    bool timerStopped, autoScale;
+    qint64 elapsedTime, pauseTime, numSamples;
+    bool timerStopped, autoScale, limitSamples;
     QCustomPlot *refPlot;
     QClipboard *clipboard;
 };

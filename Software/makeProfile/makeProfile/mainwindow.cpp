@@ -12,7 +12,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->spinBoxNumSample->hide();
     ui->spinBoxSampleDelay->hide();
     ui->pushButtonSample->hide();
-    ui->radioFilter->click();
+    ui->spinBoxNumSample->hide();
+    ui->spinBoxSampleDelay->hide();
+    ui->pushButtonSample->hide();
+    ui->label->hide();
+    ui->label_2->hide();
+    ui->pushButtonPauseResume->show();
     ui->label->hide();
     ui->label_2->hide();
     ui->pushButtonRecord->setDisabled(true);
@@ -25,6 +30,8 @@ MainWindow::MainWindow(QWidget *parent) :
     fakesensor = new FakeSensor(this);
     clipboard = QApplication::clipboard();
     elapsedTime = 0;
+    limitSamples = false;
+    usedAxes = 0;
 
     connect(timer, SIGNAL(timeout()),this,SLOT(on_timerExpire()));  // Used to update plot
     connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));  // Used to emit an error from the device interface
@@ -37,9 +44,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->spinBoxTime->setRange(1,100);
     ui->horizontalSliderSpeed->setRange(1,100);
     ui->horizontalSliderSpeed->setValue(100);
+    ui->spinBoxNumSample->setRange(1,1000);
+    ui->spinBoxSampleDelay->setRange(1,10000);
     ui->mainToolBar->hide();
 
     ui->statusBar->showMessage(QString("Starting sensor monitoring."),1000);
+    numSamples = 0;
     on_actionFake_Sensor_triggered();
 }
 
@@ -56,6 +66,16 @@ MainWindow::~MainWindow()
 // Option to take samples instead of streaming live data
 void MainWindow::on_radioSample_clicked()
 {
+    // Stop incoming data, clear aquired data
+    timer->stop();
+    globalData.resize(0);
+    globalData1.resize(0);
+    globalData2.resize(0);
+    globalData3.resize(0);
+    ui->mainPlot->graph(0)->clearData();
+    ui->mainPlot->graph(1)->clearData();
+    ui->mainPlot->graph(2)->clearData();
+    ui->mainPlot->replot();
 
     ui->label->show();
     ui->label_2->show();
@@ -68,6 +88,8 @@ void MainWindow::on_radioSample_clicked()
 // This option exists if the user doesn't want filtered data
 void MainWindow::on_radioFilter_clicked()
 {
+    if(!timer->isActive())
+        timer->start(ui->spinBoxSpeed->value());
     ui->spinBoxNumSample->hide();
     ui->spinBoxSampleDelay->hide();
     ui->pushButtonSample->hide();
@@ -79,6 +101,8 @@ void MainWindow::on_radioFilter_clicked()
 // Apply a running average filter to the incoming data
 void MainWindow::on_radioRunningAverage_clicked()
 {
+    if(!timer->isActive())
+        timer->start(ui->spinBoxSpeed->value());
     ui->spinBoxNumSample->hide();
     ui->spinBoxSampleDelay->hide();
     ui->pushButtonSample->hide();
@@ -90,6 +114,8 @@ void MainWindow::on_radioRunningAverage_clicked()
 // Apply the Kalman filter to incoming data
 void MainWindow::on_radioKalman_clicked()
 {
+    if(!timer->isActive())
+        timer->start(ui->spinBoxSpeed->value());
     ui->spinBoxNumSample->hide();
     ui->spinBoxSampleDelay->hide();
     ui->pushButtonSample->hide();
@@ -110,6 +136,7 @@ void MainWindow::stop_all_sensors(){
 //Ultrasonic Sensor
 void MainWindow::on_actionUS_Sensor_triggered()
 {
+    usedAxes = 1;
     sensor = ULTRASONIC;
     sensor_switched();
     ui->checkBoxData1->show();
@@ -125,6 +152,7 @@ void MainWindow::on_actionUS_Sensor_triggered()
 // Accelerometer
 void MainWindow::on_actionAccelerometer_triggered()
 {
+    usedAxes = 3;
     sensor = ACCELEROMETER;
     sensor_switched();
     ui->checkBoxData1->show();
@@ -140,6 +168,7 @@ void MainWindow::on_actionAccelerometer_triggered()
 // Gyroscope
 void MainWindow::on_actionGyroscope_triggered()
 {
+    usedAxes = 3;
     sensor = GYROSCOPE;
     sensor_switched();
     ui->checkBoxData1->show();
@@ -155,6 +184,7 @@ void MainWindow::on_actionGyroscope_triggered()
 // Global Positioning System
 void MainWindow::on_actionGPS_triggered()
 {
+    usedAxes = 3;
     sensor = GPS;
     sensor_switched();
     ui->checkBoxData1->show();
@@ -170,6 +200,7 @@ void MainWindow::on_actionGPS_triggered()
 // Magnetometer
 void MainWindow::on_actionCompass_triggered()
 {
+    usedAxes = 1;
     sensor = COMPASS;
     sensor_switched();
     ui->checkBoxData1->show();
@@ -185,6 +216,7 @@ void MainWindow::on_actionCompass_triggered()
 // Barometer
 void MainWindow::on_actionAltimiter_triggered()
 {
+    usedAxes = 1;
     sensor = ALTIMITER;
     sensor_switched();
     ui->checkBoxData1->show();
@@ -200,6 +232,7 @@ void MainWindow::on_actionAltimiter_triggered()
 // Infrared Sensor
 void MainWindow::on_actionIR_Sensor_triggered()
 {
+    usedAxes = 1;
     sensor = INFRARED;
     sensor_switched();
     ui->checkBoxData1->show();
@@ -214,6 +247,7 @@ void MainWindow::on_actionIR_Sensor_triggered()
 
 void MainWindow::on_actionFake_Sensor_triggered()
 {
+    usedAxes = 3;
     stop_all_sensors();
     if(sensor != FAKE){
         globalData.resize(0);
@@ -241,6 +275,7 @@ void MainWindow::on_actionFake_Sensor_triggered()
 
 void MainWindow::on_actionLight_Sensor_triggered()
 {
+    usedAxes = 1;
     stop_all_sensors();
     if(sensor != LIGHT){
         globalData.resize(0);
@@ -373,9 +408,43 @@ void MainWindow::processAxisX(const QDateTime& stamp, quint16 data){
     ui->plainTextOutput->ensureCursorVisible();
 }
 
+void MainWindow::sampleData(){
+    if(limitSamples == true && globalData.size()==numSamples){
+        if(timer->isActive())
+            timer->stop();
+        limitSamples = false;
+        QVector<double>::size_type size = globalData.size();
+        double sum0 = 0;
+        double sum1 = 0;
+        double sum2 = 0;
+
+        if(usedAxes>=1)
+            for(QVector<double>::const_iterator i = globalData1.begin(); i != globalData1.end(); ++i)
+                sum0 += *i;
+        if(usedAxes>=2)
+            for(QVector<double>::const_iterator i = globalData2.begin(); i != globalData2.end(); ++i)
+                sum1 += *i;
+        if(usedAxes>=3)
+            for(QVector<double>::const_iterator i = globalData3.begin(); i != globalData3.end(); ++i)
+                sum2 += *i;
+        if(usedAxes>=1)
+            ui->plainTextOutput->insertPlainText(QString("\nMean:\n%1) '%2'\n").arg(ui->checkBoxData1->text(), QString::number((float)sum0/size)));
+        if(usedAxes>=2)
+            ui->plainTextOutput->insertPlainText(QString("%1) '%2'\n").arg(ui->checkBoxData2->text(), QString::number((float)sum1/size)));
+        if(usedAxes>=3)
+            ui->plainTextOutput->insertPlainText(QString("%1) '%2'\n").arg(ui->checkBoxData3->text(), QString::number((float)sum2/size)));
+        ui->plainTextOutput->insertPlainText("\n");
+    }
+    ui->plainTextOutput->ensureCursorVisible();
+}
+
 void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1){
     elapsedTime += stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
     currentTime = QDateTime::currentDateTime();
+    if(limitSamples == true && globalData.size()==numSamples){
+        if(timer->isActive())
+            timer->stop();
+    }
     globalData.push_back(elapsedTime/1000.0);
     globalData1.push_back(data1);
 
@@ -385,13 +454,18 @@ void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1){
 
 
     ui->mainPlot->replot();
-    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + ":\n1)\t" + QString::number(data1)+"\n");
+    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + QString(":\n%1)\t").arg(ui->checkBoxData1->text()) + QString::number(data1)+"\n\n");
     ui->plainTextOutput->ensureCursorVisible();
+    sampleData();
 }
 
 void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1, quint16 data2){
     elapsedTime += stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
     currentTime = QDateTime::currentDateTime();
+    if(limitSamples == true && globalData.size()==numSamples){
+        if(timer->isActive())
+            timer->stop();
+    }
     globalData.push_back(elapsedTime/1000.0);
     globalData1.push_back(data1);
     globalData2.push_back(data2);
@@ -404,13 +478,18 @@ void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1, quint16 dat
 
 
     ui->mainPlot->replot();
-    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + ":\n1)\t" + QString::number(data1)+"\n2)\t" + QString::number(data2)+"\n" );
+    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + QString(":\n%1)\t").arg(ui->checkBoxData1->text()) + QString::number(data1)+QString(":\n%1)\t").arg(ui->checkBoxData2->text()) + QString::number(data2)+"\n\n");
     ui->plainTextOutput->ensureCursorVisible();
+    sampleData();
 }
 
 void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1, quint16 data2, quint16 data3){
     elapsedTime += stamp.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch();
     currentTime = QDateTime::currentDateTime();
+    if(limitSamples == true && globalData.size()==numSamples){
+        if(timer->isActive())
+            timer->stop();
+    }
     globalData.push_back(elapsedTime/1000.0);
     globalData1.push_back(data1);
     globalData2.push_back(data2);
@@ -425,8 +504,9 @@ void MainWindow::recordSensor(const QDateTime &stamp, quint16 data1, quint16 dat
 
 
     ui->mainPlot->replot();
-    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + ":\n1)\t" + QString::number(data1)+"\n2)\t" + QString::number(data2)+"\n3)\t" + QString::number(data3)+ "\n" );
+    ui->plainTextOutput->insertPlainText(QString::number(elapsedTime/1000.0) + QString(":\n%1)\t").arg(ui->checkBoxData1->text()) + QString::number(data1)+QString("\n%1)\t").arg(ui->checkBoxData2->text())+ QString::number(data2) + QString("\n%1)\t").arg(ui->checkBoxData3->text()) + QString::number(data3)+ "\n\n" );
     ui->plainTextOutput->ensureCursorVisible();
+    sampleData();
 }
 
 void MainWindow::on_deviceError(const QString& msg)
@@ -1044,4 +1124,24 @@ void MainWindow::on_pushButtonRecord_clicked()
         }
         data.close();
     }
+}
+
+void MainWindow::on_pushButtonSample_clicked()
+{
+    limitSamples = true;
+    numSamples = ui->spinBoxNumSample->value();
+
+    globalData.resize(0);
+    globalData1.resize(0);
+    globalData2.resize(0);
+    globalData3.resize(0);
+    ui->mainPlot->graph(0)->clearData();
+    ui->mainPlot->graph(1)->clearData();
+    ui->mainPlot->graph(2)->clearData();
+    ui->mainPlot->replot();
+
+    if(!timer->isActive())
+        timer->start(ui->spinBoxSampleDelay->value());
+    elapsedTime = 0;
+    currentTime = QDateTime::currentDateTime();
 }
