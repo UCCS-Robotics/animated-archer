@@ -1023,23 +1023,23 @@ void MainWindow::on_pushButtonRecord_clicked()
     if(data.open(QFile::WriteOnly |QFile::Truncate))
     {
         QTextStream output(&data);
-        output << "time\t";
+        output << "time,";
         if(!ui->checkBoxData1->isHidden())
             output << ui->checkBoxData1->text();
         if(!ui->checkBoxData2->isHidden())
-            output << "\t" << ui->checkBoxData2->text();
+            output << "," << ui->checkBoxData2->text();
         if(!ui->checkBoxData3->isHidden())
-            output << "\t" << ui->checkBoxData3->text();
+            output << "," << ui->checkBoxData3->text();
         output << "\n";
 
         for(int i = 0; i < globalData.size(); i++){
             output << globalData.at(i);
             if(!ui->checkBoxData1->isHidden())
-                output << "\t" << globalData1.at(i);
+                output << "," << globalData1.at(i);
             if(!ui->checkBoxData2->isHidden())
-                output << "\t" << globalData2.at(i);
+                output << "," << globalData2.at(i);
             if(!ui->checkBoxData3->isHidden())
-                output << "\t" << globalData3.at(i);
+                output << "," << globalData3.at(i);
             output << "\n";
         }
         data.close();

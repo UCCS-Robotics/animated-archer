@@ -567,7 +567,6 @@
     <property name="title">
      <string>Document</string>
     </property>
-    <addaction name="actionWrite_to_PDF"/>
    </widget>
    <addaction name="menuInterface"/>
    <addaction name="menuInterface_2"/>
