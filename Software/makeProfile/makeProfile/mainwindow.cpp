@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     // Initialize GUI
     ui->setupUi(this);
+    ui->statusBar->showMessage(QString("Initializing."),1000);
     ui->spinBoxNumSample->hide();
     ui->spinBoxSampleDelay->hide();
     ui->pushButtonSample->hide();
@@ -28,9 +29,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));  // Used to emit an error from the device interface
 
     plot(); // Initialize plot
-    //    lightsensor->start();   // Start lightsensor thread
-    fakesensor->start();
-
 
     // The following slider options must be initialized after starting the timer
     ui->horizontalSliderTScale->setValue(10);
@@ -40,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->horizontalSliderSpeed->setValue(100);
     ui->mainToolBar->hide();
 
-
+    ui->statusBar->showMessage(QString("Starting sensor monitoring."),1000);
     on_actionFake_Sensor_triggered();
 }
 
@@ -57,6 +55,7 @@ MainWindow::~MainWindow()
 // Option to take samples instead of streaming live data
 void MainWindow::on_radioSample_clicked()
 {
+
     ui->label->show();
     ui->label_2->show();
     ui->spinBoxNumSample->show();
@@ -97,6 +96,15 @@ void MainWindow::on_radioKalman_clicked()
     ui->label_2->hide();
     ui->pushButtonPauseResume->show();
 }
+
+
+void MainWindow::stop_all_sensors(){
+    if(lightsensor->isRunning())
+        lightsensor->quit();
+    if(fakesensor->isRunning())
+        fakesensor->quit();
+}
+
 
 //Ultrasonic Sensor
 void MainWindow::on_actionUS_Sensor_triggered()
@@ -205,6 +213,7 @@ void MainWindow::on_actionIR_Sensor_triggered()
 
 void MainWindow::on_actionFake_Sensor_triggered()
 {
+    stop_all_sensors();
     if(sensor != FAKE){
         globalData.resize(0);
         globalData1.resize(0);
@@ -224,6 +233,35 @@ void MainWindow::on_actionFake_Sensor_triggered()
     ui->labelGreen->show();
     ui->mainPlot->plotLayout()->removeAt(0);
     ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Fake Live Data"));
+    ui->statusBar->showMessage(QString("Plotting Fake Sensor."),2000);
+    fakesensor->start();
+    timer->start(1000); // Start sampling at 1 second
+}
+
+void MainWindow::on_actionLight_Sensor_triggered()
+{
+    stop_all_sensors();
+    if(sensor != LIGHT){
+        globalData.resize(0);
+        globalData1.resize(0);
+        globalData2.resize(0);
+        globalData3.resize(0);
+        ui->mainPlot->graph(0)->clearData();
+        ui->mainPlot->graph(1)->clearData();
+        ui->mainPlot->graph(2)->clearData();
+    }
+    sensor = LIGHT;
+    sensor_switched();
+    ui->checkBoxData1->show();
+    ui->labelBlue->show();
+    ui->checkBoxData2->hide();
+    ui->labelRed->hide();
+    ui->checkBoxData3->hide();
+    ui->labelGreen->hide();
+    ui->mainPlot->plotLayout()->removeAt(0);
+    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Light Live Data"));
+    ui->statusBar->showMessage(QString("Plotting Light Sensor."),2000);
+    lightsensor->start();   // Start lightsensor thread
     timer->start(1000); // Start sampling at 1 second
 }
 
@@ -241,7 +279,7 @@ void MainWindow::on_radioRaw_clicked()
         ui->mainPlot->yAxis->setLabel("Reg Values");
         break;
     case GPS:
-
+        ui->mainPlot->yAxis->setLabel("Reg Values");
         break;
     case COMPASS:
         ui->mainPlot->yAxis->setLabel("Reg Values");
@@ -249,14 +287,14 @@ void MainWindow::on_radioRaw_clicked()
     case ALTIMITER:
         ui->mainPlot->yAxis->setLabel("Reg Values");
         break;
-
     case INFRARED:
         ui->mainPlot->yAxis->setLabel("Raw PWM");
         break;
-
     case FAKE:
         ui->mainPlot->yAxis->setLabel("Fake Raw");
         break;
+    case LIGHT:
+        ui->mainPlot->yAxis->setLabel("Light Raw");
     default:
         if(!ui->radioRaw->isChecked())
             ui->radioRaw->click();
@@ -288,7 +326,7 @@ void MainWindow::on_radioConvert_clicked()
         ui->mainPlot->yAxis->setLabel("Angular Velocity (rad/s)");
         break;
     case GPS:
-
+        ui->mainPlot->yAxis->setLabel("Coordinates (unit unknown at the moment");
         break;
     case COMPASS:
         ui->mainPlot->yAxis->setLabel("Direction (rad)");
@@ -296,15 +334,14 @@ void MainWindow::on_radioConvert_clicked()
     case ALTIMITER:
         ui->mainPlot->yAxis->setLabel("Altitude (m)");
         break;
-
     case INFRARED:
         ui->mainPlot->yAxis->setLabel("Distance (mm)");
         break;
-
     case FAKE:
         ui->mainPlot->yAxis->setLabel("Fake Converted Data");
         break;
-
+    case LIGHT:
+        ui->mainPlot->yAxis->setLabel("Lux");
     default:
         if(!ui->radioRaw->isChecked())
             ui->radioRaw->click();
@@ -481,6 +518,7 @@ void MainWindow::plot(){
     ui->mainPlot->xAxis->setLabel("Time (sec)");
     ui->mainPlot->yAxis->setLabel("Data");
 
+    // Used for scaling
     refPlot = ui->mainPlot;
 }
 
@@ -507,6 +545,7 @@ void MainWindow::on_timerExpire(){
     emit send_timer();
 }
 
+// Enable or disable autoscale
 void MainWindow::on_checkBoxAutoScale_clicked(bool checked)
 {
     autoScale = checked;
@@ -514,6 +553,7 @@ void MainWindow::on_checkBoxAutoScale_clicked(bool checked)
     ui->mainPlot->replot();
 }
 
+// Setup the window for easy viewing (one axis)
 void MainWindow::set_xscreen(const QVector <double> &data1){
     int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
     int j =0;
@@ -541,6 +581,7 @@ void MainWindow::set_xscreen(const QVector <double> &data1){
     }
 }
 
+// Setup the window for easy viewing (two axis')
 void MainWindow::set_xscreen(const QVector <double> &data1,const QVector <double> &data2){
     int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
     int j =0;
@@ -579,6 +620,7 @@ void MainWindow::set_xscreen(const QVector <double> &data1,const QVector <double
     }
 }
 
+// Setup the window for easy viewing (three axis)
 void MainWindow::set_xscreen(const QVector <double> &data1,const QVector <double> &data2,const QVector <double> &data3){
     int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
     int j =0;
@@ -614,7 +656,6 @@ void MainWindow::set_xscreen(const QVector <double> &data1,const QVector <double
     else{
         lsg2 = data3;
     }
-
 
     ui->mainPlot->rescaleAxes();
 
@@ -722,7 +763,8 @@ void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
     ui->spinBoxSpeed->setValue(value*10);
     if(timer->isActive())
         timer->stop();
-    timer->start(value*10);
+    if(!ui->pushButtonPauseResume)
+        timer->start(value*10);
 }
 
 void MainWindow::on_spinBoxSpeed_valueChanged(int arg1)
@@ -730,6 +772,7 @@ void MainWindow::on_spinBoxSpeed_valueChanged(int arg1)
     ui->horizontalSliderSpeed->setValue(arg1/10);
 }
 
+// Hide/show axis1
 void MainWindow::on_checkBoxData1_clicked(bool checked)
 {
     if(checked){
@@ -742,6 +785,7 @@ void MainWindow::on_checkBoxData1_clicked(bool checked)
     ui->mainPlot->replot();
 }
 
+// Hide/show axis2
 void MainWindow::on_checkBoxData2_clicked(bool checked)
 {
     if(checked){
@@ -754,6 +798,7 @@ void MainWindow::on_checkBoxData2_clicked(bool checked)
     ui->mainPlot->replot();
 }
 
+// Hide/show axis3
 void MainWindow::on_checkBoxData3_clicked(bool checked)
 {
     if(checked){
@@ -766,6 +811,7 @@ void MainWindow::on_checkBoxData3_clicked(bool checked)
     ui->mainPlot->replot();
 }
 
+// Rename title
 void MainWindow::titleDoubleClick(QMouseEvent* event, QCPPlotTitle* title)
 {
     Q_UNUSED(event)
@@ -779,6 +825,7 @@ void MainWindow::titleDoubleClick(QMouseEvent* event, QCPPlotTitle* title)
     }
 }
 
+// Rename axis
 void MainWindow::axisLabelDoubleClick(QCPAxis *axis, QCPAxis::SelectablePart part)
 {
     // Set an axis label by double clicking on it
@@ -794,6 +841,7 @@ void MainWindow::axisLabelDoubleClick(QCPAxis *axis, QCPAxis::SelectablePart par
     }
 }
 
+// Allow renaming of the legend/checkboxes on the side
 void MainWindow::legendDoubleClick(QCPLegend *legend, QCPAbstractLegendItem *item)
 {
     // Rename a graph by double clicking on its legend item
@@ -886,6 +934,7 @@ void MainWindow::mouseWheel()
         ui->mainPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
 }
 
+// The is where all of the context menues go, use slots to make the data processing more efficient
 void MainWindow::contextMenuRequest(QPoint pos)
 {
     QMenu *menu = new QMenu(this);
@@ -908,6 +957,7 @@ void MainWindow::contextMenuRequest(QPoint pos)
     menu->popup(ui->mainPlot->mapToGlobal(pos));
 }
 
+// Slot for moving the legend
 void MainWindow::moveLegend()
 {
     if (QAction* contextAction = qobject_cast<QAction*>(sender())) // make sure this slot is really called by a context menu action, so it carries the data we need
@@ -922,17 +972,22 @@ void MainWindow::moveLegend()
     }
 }
 
+// Show status
 void MainWindow::graphClicked(QCPAbstractPlottable *plottable)
 {
     ui->statusBar->showMessage(QString("Clicked on graph '%1'.").arg(plottable->name()), 1000);
 }
 
+// Copy graph data to clipboard in a format compatable with pasting into spreadsheets
 void MainWindow::graphCopy(){
-    QString output;
-    QCPGraph * selected;
+    QString output; // String to be placed in clipboard
+    QCPGraph * selected;    // Used to determine which graph is selected
 
+    // Make darn sure that exactly one graph is selected
     if (ui->mainPlot->selectedGraphs().size() == 1){
+        // Get the graph
         selected = ui->mainPlot->selectedGraphs().first();
+        // Determine which one it is, and add to output string
         if(selected == ui->mainPlot->graph(0)){
             for(quint16 i = 0; i < globalData.size(); i++){
                 output += QString::number(globalData.at(i)) + "\t" + QString::number(globalData1.at(i))+"\n";
@@ -947,10 +1002,13 @@ void MainWindow::graphCopy(){
             }
         }
         clipboard->setText(output);
+        ui->statusBar->showMessage(QString("Graph '%1' data copied to clipboard.").arg(selected->name()),2000);
     }
 }
 
+// Copy current plot window to clipboard
 void MainWindow::windowCopy()
 {
     clipboard->setPixmap(ui->mainPlot->toPixmap(800,600,1));
+    ui->statusBar->showMessage(QString("Current window copied to clipboard."),2000);
 }

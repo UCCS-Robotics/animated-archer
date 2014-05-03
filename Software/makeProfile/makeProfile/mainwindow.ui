@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1255</width>
-    <height>768</height>
+    <width>837</width>
+    <height>728</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -278,7 +278,7 @@
          <widget class="QFrame" name="frame_2">
           <property name="maximumSize">
            <size>
-            <width>306</width>
+            <width>310</width>
             <height>103</height>
            </size>
           </property>
@@ -532,8 +532,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1255</width>
-     <height>19</height>
+     <width>837</width>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuInterface">
@@ -548,6 +548,7 @@
     <addaction name="actionAltimiter"/>
     <addaction name="actionIR_Sensor"/>
     <addaction name="actionFake_Sensor"/>
+    <addaction name="actionLight_Sensor"/>
    </widget>
    <widget class="QMenu" name="menuInterface_2">
     <property name="title">
@@ -655,6 +656,11 @@
   <action name="actionFake_Sensor">
    <property name="text">
     <string>Imaginary Sensor</string>
+   </property>
+  </action>
+  <action name="actionLight_Sensor">
+   <property name="text">
+    <string>Light Sensor</string>
    </property>
   </action>
  </widget>

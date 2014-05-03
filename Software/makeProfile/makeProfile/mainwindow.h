@@ -19,6 +19,7 @@
 #define COMPASS 6
 #define ALTIMITER 7
 #define INFRARED 8
+#define LIGHT 9
 #define FAKE 99
 
 namespace Ui {
@@ -43,9 +44,12 @@ private:
     QCPRange find_axis_range(const QVector<double>&,const QVector<double>&);
     QCPRange find_axis_range(const QVector<double>&,const QVector<double>&,const QVector<double>&);
     QCPRange find_axis_range_logic(const QCPRange&,const QCPRange&);
+    void stop_all_sensors();
 
 signals:
     void send_timer();
+    void send_disconnect();
+    void send_connect();
 
 private slots:
 
@@ -126,6 +130,8 @@ private slots:
     void graphClicked(QCPAbstractPlottable *plottable);
     void graphCopy();
     void windowCopy();
+
+    void on_actionLight_Sensor_triggered();
 
 private:
     Ui::MainWindow *ui;
