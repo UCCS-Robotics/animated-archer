@@ -858,6 +858,7 @@ void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
     if(!ui->pushButtonPauseResume->isChecked())
         timer->start(value*10);
     emit time_changed(value*10);
+    adcsensor->program(value*10);
 }
 
 void MainWindow::on_spinBoxSpeed_valueChanged(int arg1)

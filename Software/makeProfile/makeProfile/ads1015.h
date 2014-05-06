@@ -24,7 +24,7 @@ private slots:
 signals:
     void sensorData(const QDateTime& stamp, quint8 chan, quint16 value);
 
-protected slots:
+public slots:
     void program(qint16 delay_ms);
 
 private:
