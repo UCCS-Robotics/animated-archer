@@ -256,6 +256,42 @@ void DeviceConnection::parseStatus(Packet *p)
 
             break;
         }
+        case 10:
+        {
+            emit error(tr("Transaction with ID %1 has an invalid program ID.").arg(p->tag));
+
+            // The transaction failed.
+            emit transactionFailed(trans);
+
+            break;
+        }
+        case 11:
+        {
+            emit error(tr("Transaction with ID %1 has a program with an invalid opcode.").arg(p->tag));
+
+            // The transaction failed.
+            emit transactionFailed(trans);
+
+            break;
+        }
+        case 12:
+        {
+            emit error(tr("Transaction with ID %1 has a program that would read too much data.").arg(p->tag));
+
+            // The transaction failed.
+            emit transactionFailed(trans);
+
+            break;
+        }
+        case 13:
+        {
+            emit error(tr("Transaction with ID %1 has a program that contains too much write data.").arg(p->tag));
+
+            // The transaction failed.
+            emit transactionFailed(trans);
+
+            break;
+        }
         default:
         {
         emit error(tr("Transaction with ID %1 encountered an "

@@ -54,6 +54,20 @@ void BurstProgram::addWrite(uint8_t addr, const uint8_t *data, uint8_t sz, bool 
         d->prog.program[d->size++] = *(data++);
 }
 
+void BurstProgram::addDelayMS(uint16_t val)
+{
+    d->prog.program[d->size++] = BurstOpcode_DelayMS;
+    d->prog.program[d->size++] = val && 0xFF;
+    d->prog.program[d->size++] = val >> 8;
+}
+
+void BurstProgram::addDelayUS(uint16_t val)
+{
+    d->prog.program[d->size++] = BurstOpcode_DelayUS;
+    d->prog.program[d->size++] = val && 0xFF;
+    d->prog.program[d->size++] = val >> 8;
+}
+
 uint8_t BurstProgram::programID() const
 {
     return d->prog.programID;

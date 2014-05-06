@@ -27,6 +27,9 @@ MainWindow::MainWindow(QWidget *parent) :
     usb = new Device;
     timer = new QTimer(this);
     lightsensor = new SensorThread(this);
+    adcsensor = new ADS1015;
+    connect(adcsensor, SIGNAL(sensorData(QDateTime,quint8,quint16)),
+            this, SLOT(processADCData(QDateTime,quint8,quint16)));
     fakesensor = new FakeSensor(this);
     clipboard = QApplication::clipboard();
     elapsedTime = 0;
@@ -389,6 +392,11 @@ void MainWindow::on_radioConvert_clicked()
 
 // Import light sensor data (for testing purposes)
 void MainWindow::processLightSensorData(const QDateTime& stamp, quint16 data){
+    recordSensor(stamp,data);
+}
+
+// Import light sensor data (for testing purposes)
+void MainWindow::processADCData(const QDateTime& stamp, quint8 chan, quint16 data){
     recordSensor(stamp,data);
 }
 

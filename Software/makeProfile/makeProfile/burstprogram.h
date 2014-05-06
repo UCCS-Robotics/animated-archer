@@ -25,6 +25,8 @@ public:
     void addRead(uint8_t addr, uint8_t sz);
     void addWrite(uint8_t addr, const QByteArray& data, bool stop = true);
     void addWrite(uint8_t addr, const uint8_t *data, uint8_t sz, bool stop = true);
+    void addDelayMS(uint16_t val);
+    void addDelayUS(uint16_t val);
 
     uint8_t programID() const;
     void setProgramID(uint8_t id);
@@ -39,7 +41,9 @@ public:
       BurstOpcode_NOP = 0,
       BurstOpcode_Read = 1,
       BurstOpcode_Write = 2,
-      BurstOpcode_WriteNoStop = 3
+      BurstOpcode_WriteNoStop = 3,
+      BurstOpcode_DelayMS = 4,
+      BurstOpcode_DelayUS = 5
     } BurstOpcode;
 
     typedef struct _ProgramData

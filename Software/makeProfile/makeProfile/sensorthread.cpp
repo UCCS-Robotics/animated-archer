@@ -8,11 +8,11 @@ SensorThread::SensorThread(MainWindow *mainwindowin,QObject *parent) :
 }
 
 void SensorThread::run(){
-    lightsensor = new LightSensor;
+    //lightsensor = new LightSensor;
     timer = new QTimer;
     timer->start(500);
-    connect(lightsensor,SIGNAL(sensorData(const QDateTime&, quint16)),mainwindow,SLOT(processLightSensorData(QDateTime,quint16)));
-    connect(mainwindow,SIGNAL(time_changed(qint32)), lightsensor, SLOT(on_change_time(qint32)));
+    //connect(lightsensor,SIGNAL(sensorData(const QDateTime&, quint16)),mainwindow,SLOT(processLightSensorData(QDateTime,quint16)));
+    //connect(mainwindow,SIGNAL(time_changed(qint32)), lightsensor, SLOT(on_change_time(qint32)));
     //connect(timer, SIGNAL(timeout()), lightsensor, SLOT(updateSensor()));
     //connect(mainwindow,SIGNAL(send_timer()),lightsensor,SLOT(updateSensor()));
     exec();

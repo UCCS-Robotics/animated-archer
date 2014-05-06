@@ -10,6 +10,7 @@
 #include "device.h"
 #include "sensorthread.h"
 #include "fakesensor.h"
+#include "ads1015.h"
 
 #define ULTRASONIC 1
 #define ACCELEROMETER 2
@@ -84,6 +85,7 @@ private slots:
     void on_actionConnect_Device_triggered();
 
     void processLightSensorData(const QDateTime&, quint16);
+    void processADCData(const QDateTime&, quint8, quint16);
 
     void processAxisX(const QDateTime&, quint16);
 
@@ -145,6 +147,7 @@ private:
     Device *usb;
     QTimer *timer;
     SensorThread *lightsensor;
+    ADS1015 *adcsensor;
     FakeSensor *fakesensor;
     int time;
     QDateTime currentTime, currTime, nextTime;
