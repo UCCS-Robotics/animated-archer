@@ -50,7 +50,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->statusBar->showMessage(QString("Starting sensor monitoring."),1000);
     numSamples = 0;
-    on_actionFake_Sensor_triggered();
+//    on_actionFake_Sensor_triggered();
+    on_actionLight_Sensor_triggered();
 }
 
 MainWindow::~MainWindow()
@@ -388,7 +389,7 @@ void MainWindow::on_radioConvert_clicked()
 
 // Import light sensor data (for testing purposes)
 void MainWindow::processLightSensorData(const QDateTime& stamp, quint16 data){
-    processAxisX(stamp,data);
+    recordSensor(stamp,data);
 }
 
 void MainWindow::processAxisX(const QDateTime& stamp, quint16 data){
@@ -848,6 +849,7 @@ void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
         timer->stop();
     if(!ui->pushButtonPauseResume->isChecked())
         timer->start(value*10);
+    emit time_changed(value);
 }
 
 void MainWindow::on_spinBoxSpeed_valueChanged(int arg1)

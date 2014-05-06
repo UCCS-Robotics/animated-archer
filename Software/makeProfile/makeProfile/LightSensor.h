@@ -22,6 +22,7 @@ private slots:
     void disconnected();
     void transactionComplete(const DeviceTransactionPtr& trans);
     void burstResult(quint8 programID, quint32 timeStamp, const QByteArray& data);
+    void on_change_time(qint32);
 
 signals:
     void sensorData(const QDateTime& stamp, quint16);

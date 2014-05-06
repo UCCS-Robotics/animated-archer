@@ -98,6 +98,47 @@ void LightSensor::connected()
     mDevice.startProgram(prog, "light:prog");
 }
 
+void LightSensor::on_change_time(qint32 time){
+    // Data for the commands that are about to be written.
+    const uint8_t powerOnData[2] = {
+        TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,  // Register
+        TSL2561_CONTROL_POWERON                          // Argument
+    };
+    const uint8_t configSensorData[2] = {
+        TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,   // Register
+        TSL2561_INTEGRATIONTIME_101MS | TSL2561_GAIN_16X // Argument
+    };
+
+    // Turn on the sensor then set timing and gain.
+    mDevice.sendWrite(TSL2561_ADDR_FLOAT, powerOnData, 2, "light");
+    mDevice.sendWrite(TSL2561_ADDR_FLOAT, configSensorData, 2, "light");
+
+    // Data for the burst program commands.
+    const uint8_t reg1 = TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN1_LOW;
+    const uint8_t reg2 = TSL2561_COMMAND_BIT | TSL2561_WORD_BIT | TSL2561_REGISTER_CHAN0_LOW;
+
+    // The burst program we are about to describe.
+    BurstProgram prog;
+
+    // First send the command to read the IR value.
+    prog.addWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg1, 1));
+    prog.addRead(TSL2561_ADDR_FLOAT, 2);
+
+    // Next send the command to read the full value.
+    prog.addWrite(TSL2561_ADDR_FLOAT, QByteArray((char*)&reg2, 1));
+    prog.addRead(TSL2561_ADDR_FLOAT, 2);
+
+    // Set the program ID and update interval.
+    prog.setProgramID(0);
+    prog.setRunInterval(time); // 25ms or 40Hz
+
+    // Make sure the program is valid.
+    Q_ASSERT(prog.isValid());
+
+    // Send the program to the device.
+    mDevice.startProgram(prog, "light:prog");
+}
+
 void LightSensor::burstResult(quint8 programID, quint32 timeStamp, const QByteArray& data)
 {
     // If the burst result is not from this program, ignore the result.

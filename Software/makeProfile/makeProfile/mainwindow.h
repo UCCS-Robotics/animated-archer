@@ -51,6 +51,7 @@ signals:
     void send_timer();
     void send_disconnect();
     void send_connect();
+    void time_changed(qint32);
 
 private slots:
 
