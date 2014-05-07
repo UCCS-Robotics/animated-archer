@@ -26,11 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
     // Initialize pointers
     usb = new Device;
     timer = new QTimer(this);
-    lightsensor = new SensorThread(this);
-    adcsensor = new ADS1015;
-    connect(adcsensor, SIGNAL(sensorData(QDateTime,quint8,quint16)),
-            this, SLOT(processADCData(QDateTime,quint8,quint16)));
-    fakesensor = new FakeSensor(this);
+    device = new sensors(this);
+
     clipboard = QApplication::clipboard();
     elapsedTime = 0;
     limitSamples = false;
@@ -62,9 +59,6 @@ MainWindow::~MainWindow()
     delete ui;
     delete usb;
     delete timer;
-    lightsensor->quit();    //Stop thread
-    while(lightsensor->isRunning());    //Wait for thread to stop
-    delete lightsensor;
 }
 
 // Option to take samples instead of streaming live data
@@ -130,10 +124,7 @@ void MainWindow::on_radioKalman_clicked()
 
 
 void MainWindow::stop_all_sensors(){
-    if(lightsensor->isRunning())
-        lightsensor->quit();
-    if(fakesensor->isRunning())
-        fakesensor->quit();
+    device->stop_all_sensors();
 }
 
 
@@ -141,7 +132,7 @@ void MainWindow::stop_all_sensors(){
 void MainWindow::on_actionUS_Sensor_triggered()
 {
     usedAxes = 1;
-    sensor = ULTRASONIC;
+    device->set_sensor(ULTRASONIC);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -157,7 +148,7 @@ void MainWindow::on_actionUS_Sensor_triggered()
 void MainWindow::on_actionAccelerometer_triggered()
 {
     usedAxes = 3;
-    sensor = ACCELEROMETER;
+    device->set_sensor(ACCELEROMETER);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -173,7 +164,7 @@ void MainWindow::on_actionAccelerometer_triggered()
 void MainWindow::on_actionGyroscope_triggered()
 {
     usedAxes = 3;
-    sensor = GYROSCOPE;
+    device->set_sensor(GYROSCOPE);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -189,7 +180,7 @@ void MainWindow::on_actionGyroscope_triggered()
 void MainWindow::on_actionGPS_triggered()
 {
     usedAxes = 3;
-    sensor = GPS;
+    device->set_sensor(GPS);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -205,7 +196,7 @@ void MainWindow::on_actionGPS_triggered()
 void MainWindow::on_actionCompass_triggered()
 {
     usedAxes = 1;
-    sensor = COMPASS;
+    device->set_sensor(COMPASS);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -221,7 +212,7 @@ void MainWindow::on_actionCompass_triggered()
 void MainWindow::on_actionAltimiter_triggered()
 {
     usedAxes = 1;
-    sensor = ALTIMITER;
+    device->set_sensor(ALTIMITER);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -237,7 +228,7 @@ void MainWindow::on_actionAltimiter_triggered()
 void MainWindow::on_actionIR_Sensor_triggered()
 {
     usedAxes = 1;
-    sensor = INFRARED;
+    device->set_sensor(INFRARED);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -253,7 +244,7 @@ void MainWindow::on_actionFake_Sensor_triggered()
 {
     usedAxes = 3;
     stop_all_sensors();
-    if(sensor != FAKE){
+    if(device->get_sensor() != FAKE){
         globalData.resize(0);
         globalData1.resize(0);
         globalData2.resize(0);
@@ -262,7 +253,7 @@ void MainWindow::on_actionFake_Sensor_triggered()
         ui->mainPlot->graph(1)->clearData();
         ui->mainPlot->graph(2)->clearData();
     }
-    sensor = FAKE;
+    device->set_sensor(FAKE);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -273,7 +264,7 @@ void MainWindow::on_actionFake_Sensor_triggered()
     ui->mainPlot->plotLayout()->removeAt(0);
     ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Fake Live Data"));
     ui->statusBar->showMessage(QString("Plotting Fake Sensor."),2000);
-    fakesensor->start();
+    device->get_sudo_sensor()->start();
     timer->start(1000); // Start sampling at 1 second
 }
 
@@ -281,7 +272,7 @@ void MainWindow::on_actionLight_Sensor_triggered()
 {
     usedAxes = 1;
     stop_all_sensors();
-    if(sensor != LIGHT){
+    if(device->get_sensor() != LIGHT){
         globalData.resize(0);
         globalData1.resize(0);
         globalData2.resize(0);
@@ -290,7 +281,7 @@ void MainWindow::on_actionLight_Sensor_triggered()
         ui->mainPlot->graph(1)->clearData();
         ui->mainPlot->graph(2)->clearData();
     }
-    sensor = LIGHT;
+    device->set_sensor(LIGHT);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -301,14 +292,14 @@ void MainWindow::on_actionLight_Sensor_triggered()
     ui->mainPlot->plotLayout()->removeAt(0);
     ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Light Live Data"));
     ui->statusBar->showMessage(QString("Plotting Light Sensor."),2000);
-    lightsensor->start();   // Start lightsensor thread
+    device->get_light_sensor()->start();   // Start lightsensor thread
     timer->start(1000); // Start sampling at 1 second
 }
 
 // Raw data (not passed through transfer function)
 void MainWindow::on_radioRaw_clicked()
 {
-    switch(sensor){
+    switch(device->get_sensor()){
     case ULTRASONIC:
         ui->mainPlot->yAxis->setLabel("ADC Voltage");
         break;
@@ -355,7 +346,7 @@ void MainWindow::sensor_switched(){
 // Run the raw data through the proper transfer functions
 void MainWindow::on_radioConvert_clicked()
 {
-    switch(sensor){
+    switch(device->get_sensor()){
     case ULTRASONIC:
         ui->mainPlot->yAxis->setLabel("Distance (mm)");
         break;
@@ -858,7 +849,7 @@ void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
     if(!ui->pushButtonPauseResume->isChecked())
         timer->start(value*10);
     emit time_changed(value*10);
-    adcsensor->program(value*10);
+    device->get_ads1015()->program(value*10);
 }
 
 void MainWindow::on_spinBoxSpeed_valueChanged(int arg1)

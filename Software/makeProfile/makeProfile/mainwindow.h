@@ -7,21 +7,7 @@
 #include <QClipboard>
 #include <QList>
 #include "qcustomplot.h"
-#include "device.h"
-#include "sensorthread.h"
-#include "fakesensor.h"
-#include "ads1015.h"
-
-#define ULTRASONIC 1
-#define ACCELEROMETER 2
-#define GYROSCOPE 3
-#define THERMOMETER 4
-#define GPS 5
-#define COMPASS 6
-#define ALTIMITER 7
-#define INFRARED 8
-#define LIGHT 9
-#define FAKE 99
+#include "sensors.h"
 
 namespace Ui {
 class MainWindow;
@@ -146,9 +132,6 @@ private:
     char sensor, usedAxes;
     Device *usb;
     QTimer *timer;
-    SensorThread *lightsensor;
-    ADS1015 *adcsensor;
-    FakeSensor *fakesensor;
     int time;
     QDateTime currentTime, currTime, nextTime;
     QVector <double> lsg0, lsg1, lsg2, globalData, globalData1, globalData2, globalData3;
@@ -156,6 +139,7 @@ private:
     bool timerStopped, autoScale, limitSamples;
     QCustomPlot *refPlot;
     QClipboard *clipboard;
+    sensors *device;
 };
 
 #endif // MAINWINDOW_H

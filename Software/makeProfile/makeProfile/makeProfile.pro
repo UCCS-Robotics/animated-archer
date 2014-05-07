@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     devicetransaction.cpp \
     fakesensor.cpp \
     burstprogram.cpp \
-    ads1015.cpp
+    ads1015.cpp \
+    sensors.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
@@ -40,7 +41,8 @@ HEADERS  += mainwindow.h \
     devicetransaction.h \
     fakesensor.h / \
     ads1015.h \
-    burstprogram.h
+    burstprogram.h \
+    sensors.h
     burstprogram.h
 
 FORMS    += mainwindow.ui
