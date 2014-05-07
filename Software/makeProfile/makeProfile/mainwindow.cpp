@@ -24,7 +24,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QWidget::setWindowTitle("Live Data");
 
     // Initialize pointers
-    usb = new Device;
     timer = new QTimer(this);
     device = new sensors(this);
 
@@ -34,7 +33,6 @@ MainWindow::MainWindow(QWidget *parent) :
     usedAxes = 0;
 
     connect(timer, SIGNAL(timeout()),this,SLOT(on_timerExpire()));  // Used to update plot
-    connect(usb, SIGNAL(deviceError(QString)), this, SLOT(on_deviceError(QString)));  // Used to emit an error from the device interface
 
     plot(); // Initialize plot
 
@@ -66,6 +64,7 @@ void MainWindow::on_radioSample_clicked()
 {
     // Stop incoming data, clear aquired data
     timer->stop();
+    // device.clear_data()
     globalData.resize(0);
     globalData1.resize(0);
     globalData2.resize(0);
@@ -132,7 +131,7 @@ void MainWindow::stop_all_sensors(){
 void MainWindow::on_actionUS_Sensor_triggered()
 {
     usedAxes = 1;
-    device->set_sensor(ULTRASONIC);
+    device->set_sensor_type(ULTRASONIC);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -148,7 +147,7 @@ void MainWindow::on_actionUS_Sensor_triggered()
 void MainWindow::on_actionAccelerometer_triggered()
 {
     usedAxes = 3;
-    device->set_sensor(ACCELEROMETER);
+    device->set_sensor_type(ACCELEROMETER);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -164,7 +163,7 @@ void MainWindow::on_actionAccelerometer_triggered()
 void MainWindow::on_actionGyroscope_triggered()
 {
     usedAxes = 3;
-    device->set_sensor(GYROSCOPE);
+    device->set_sensor_type(GYROSCOPE);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -180,7 +179,7 @@ void MainWindow::on_actionGyroscope_triggered()
 void MainWindow::on_actionGPS_triggered()
 {
     usedAxes = 3;
-    device->set_sensor(GPS);
+    device->set_sensor_type(GPS);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -196,7 +195,7 @@ void MainWindow::on_actionGPS_triggered()
 void MainWindow::on_actionCompass_triggered()
 {
     usedAxes = 1;
-    device->set_sensor(COMPASS);
+    device->set_sensor_type(COMPASS);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -212,7 +211,7 @@ void MainWindow::on_actionCompass_triggered()
 void MainWindow::on_actionAltimiter_triggered()
 {
     usedAxes = 1;
-    device->set_sensor(ALTIMITER);
+    device->set_sensor_type(ALTIMITER);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -228,7 +227,7 @@ void MainWindow::on_actionAltimiter_triggered()
 void MainWindow::on_actionIR_Sensor_triggered()
 {
     usedAxes = 1;
-    device->set_sensor(INFRARED);
+    device->set_sensor_type(INFRARED);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -244,7 +243,7 @@ void MainWindow::on_actionFake_Sensor_triggered()
 {
     usedAxes = 3;
     stop_all_sensors();
-    if(device->get_sensor() != FAKE){
+    if(device->get_sensor_type() != FAKE){
         globalData.resize(0);
         globalData1.resize(0);
         globalData2.resize(0);
@@ -253,7 +252,7 @@ void MainWindow::on_actionFake_Sensor_triggered()
         ui->mainPlot->graph(1)->clearData();
         ui->mainPlot->graph(2)->clearData();
     }
-    device->set_sensor(FAKE);
+    device->set_sensor_type(FAKE);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -272,7 +271,7 @@ void MainWindow::on_actionLight_Sensor_triggered()
 {
     usedAxes = 1;
     stop_all_sensors();
-    if(device->get_sensor() != LIGHT){
+    if(device->get_sensor_type() != LIGHT){
         globalData.resize(0);
         globalData1.resize(0);
         globalData2.resize(0);
@@ -281,7 +280,7 @@ void MainWindow::on_actionLight_Sensor_triggered()
         ui->mainPlot->graph(1)->clearData();
         ui->mainPlot->graph(2)->clearData();
     }
-    device->set_sensor(LIGHT);
+    device->set_sensor_type(LIGHT);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -299,7 +298,7 @@ void MainWindow::on_actionLight_Sensor_triggered()
 // Raw data (not passed through transfer function)
 void MainWindow::on_radioRaw_clicked()
 {
-    switch(device->get_sensor()){
+    switch(device->get_sensor_type()){
     case ULTRASONIC:
         ui->mainPlot->yAxis->setLabel("ADC Voltage");
         break;
@@ -346,7 +345,7 @@ void MainWindow::sensor_switched(){
 // Run the raw data through the proper transfer functions
 void MainWindow::on_radioConvert_clicked()
 {
-    switch(device->get_sensor()){
+    switch(device->get_sensor_type()){
     case ULTRASONIC:
         ui->mainPlot->yAxis->setLabel("Distance (mm)");
         break;

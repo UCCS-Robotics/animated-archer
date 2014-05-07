@@ -7,8 +7,11 @@ sensors::sensors(MainWindow *mainwindowin, QObject *parent) :
     mainwindow = mainwindowin;
     lightsensor = new SensorThread(mainwindowin);
     adcsensor = new ADS1015;
+    usb = new Device;
     connect(adcsensor, SIGNAL(sensorData(QDateTime,quint8,quint16)),
             mainwindow, SLOT(processADCData(QDateTime,quint8,quint16)));
+    connect(usb, SIGNAL(deviceError(QString)),
+            mainwindow, SLOT(on_deviceError(QString)));
     fakesensor = new FakeSensor(mainwindowin);
 }
 
@@ -24,4 +27,14 @@ void sensors::stop_all_sensors(){
         lightsensor->quit();
     if(fakesensor->isRunning())
         fakesensor->quit();
+}
+
+void sensors::clear_data(){
+    globalRawData.resize(0);
+    globalData.resize(0);
+}
+
+void sensors::set_sensor_type(uchar sensor_type){
+    sensorType = sensor_type;
+    clear_data();
 }
