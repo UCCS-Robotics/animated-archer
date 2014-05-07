@@ -36,11 +36,6 @@ Device::~Device()
 void Device::connected()
 {
     mConnected = true;
-
-    // Debug for my LCD.
-    uint8_t clearCmd[] = { 0xFE, 0x51 };
-    sendWrite(0x28, clearCmd, 2);
-    sendWrite(0x28, "Hello I2C!", 10);
 }
 
 void Device::disconnected()
