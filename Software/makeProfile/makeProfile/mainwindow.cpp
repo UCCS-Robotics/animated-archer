@@ -130,8 +130,9 @@ void MainWindow::stop_all_sensors(){
 //Ultrasonic Sensor
 void MainWindow::on_actionUS_Sensor_triggered()
 {
-    usedAxes = 1;
-    device->set_sensor_type(ULTRASONIC);
+    device->select_ultra_sonic();
+    usedAxes = device->get_used_graphs();
+    sensor = (char)device->get_sensor_type();
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -143,43 +144,21 @@ void MainWindow::on_actionUS_Sensor_triggered()
     ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Ultrasonic Live Data"));
 }
 
-// Accelerometer
-void MainWindow::on_actionAccelerometer_triggered()
+void MainWindow::on_action9_DOF_triggered()
 {
-    usedAxes = 3;
-    device->set_sensor_type(ACCELEROMETER);
+    device->select_lsm9ds0();
+    usedAxes = device->get_used_graphs();
+    sensor = (char)device->get_sensor_type();
     sensor_switched();
-    ui->checkBoxData1->show();
-    ui->labelBlue->show();
-    ui->checkBoxData2->show();
-    ui->labelRed->show();
-    ui->checkBoxData3->show();
-    ui->labelGreen->show();
-    ui->mainPlot->plotLayout()->removeAt(0);
-    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Accelerometer Live Data"));
-}
-
-// Gyroscope
-void MainWindow::on_actionGyroscope_triggered()
-{
-    usedAxes = 3;
-    device->set_sensor_type(GYROSCOPE);
-    sensor_switched();
-    ui->checkBoxData1->show();
-    ui->labelBlue->show();
-    ui->checkBoxData2->show();
-    ui->labelRed->show();
-    ui->checkBoxData3->show();
-    ui->labelGreen->show();
-    ui->mainPlot->plotLayout()->removeAt(0);
-    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Gyroscope Live Data"));
+    //...
 }
 
 // Global Positioning System
 void MainWindow::on_actionGPS_triggered()
 {
-    usedAxes = 3;
-    device->set_sensor_type(GPS);
+    device->select_ls20031();
+    usedAxes = device->get_used_graphs();
+    sensor = (char)device->get_sensor_type();
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -191,27 +170,12 @@ void MainWindow::on_actionGPS_triggered()
     ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "GPS Live Data"));
 }
 
-// Magnetometer
-void MainWindow::on_actionCompass_triggered()
-{
-    usedAxes = 1;
-    device->set_sensor_type(COMPASS);
-    sensor_switched();
-    ui->checkBoxData1->show();
-    ui->labelBlue->show();
-    ui->checkBoxData2->hide();
-    ui->labelRed->hide();
-    ui->checkBoxData3->hide();
-    ui->labelGreen->hide();
-    ui->mainPlot->plotLayout()->removeAt(0);
-    ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Compass Live Data"));
-}
-
 // Barometer
 void MainWindow::on_actionAltimiter_triggered()
 {
-    usedAxes = 1;
-    device->set_sensor_type(ALTIMITER);
+    device->select_mpl3115a2();
+    usedAxes = device->get_used_graphs();
+    sensor = device->get_sensor_type();
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -226,8 +190,9 @@ void MainWindow::on_actionAltimiter_triggered()
 // Infrared Sensor
 void MainWindow::on_actionIR_Sensor_triggered()
 {
-    usedAxes = 1;
-    device->set_sensor_type(INFRARED);
+    device->select_infrared();
+    usedAxes = device->get_used_graphs();
+    sensor = device->get_sensor_type();
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -241,7 +206,9 @@ void MainWindow::on_actionIR_Sensor_triggered()
 
 void MainWindow::on_actionFake_Sensor_triggered()
 {
-    usedAxes = 3;
+    device->select_sudo_sensor();
+    usedAxes = device->get_used_graphs();
+    sensor = device->get_sensor_type();
     stop_all_sensors();
     if(device->get_sensor_type() != FAKE){
         globalData.resize(0);
@@ -269,7 +236,9 @@ void MainWindow::on_actionFake_Sensor_triggered()
 
 void MainWindow::on_actionLight_Sensor_triggered()
 {
-    usedAxes = 1;
+    device->select_light_sensor();
+    usedAxes = device->get_used_graphs();
+    sensor = device->get_sensor_type();
     stop_all_sensors();
     if(device->get_sensor_type() != LIGHT){
         globalData.resize(0);

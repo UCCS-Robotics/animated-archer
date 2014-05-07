@@ -52,13 +52,7 @@ private slots:
 
     void on_actionUS_Sensor_triggered();
 
-    void on_actionAccelerometer_triggered();
-
-    void on_actionGyroscope_triggered();
-
     void on_actionGPS_triggered();
-
-    void on_actionCompass_triggered();
 
     void on_actionAltimiter_triggered();
 
@@ -126,6 +120,8 @@ private slots:
     void on_pushButtonRecord_clicked();
 
     void on_pushButtonSample_clicked();
+
+    void on_action9_DOF_triggered();
 
 private:
     Ui::MainWindow *ui;

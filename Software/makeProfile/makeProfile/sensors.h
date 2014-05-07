@@ -10,6 +10,7 @@
 #define ALTIMITER 7
 #define INFRARED 8
 #define LIGHT 9
+#define NINEDOF 10
 #define FAKE 99
 
 #include <QObject>
@@ -31,12 +32,13 @@ public:
 
     //////////////////////////////////////////////////
 
-    void setup_ultra_sonic();
-    void setup_lsm9ds0();   //9 DOF IMU
-    void setup_ls20031();   //GPS
-    void setup_mpl3115a2(); //altimiter
-    void setup_infrared();
-    void setup_sudo_sensor();
+    void select_ultra_sonic();
+    void select_lsm9ds0();   //9 DOF IMU
+    void select_ls20031();   //GPS
+    void select_mpl3115a2(); //altimiter
+    void select_infrared();
+    void select_sudo_sensor();
+    void select_light_sensor();
 
     //////////////////////////////////////////////////
 
@@ -59,7 +61,7 @@ public:
     //////////////////////////////////////////////////
 
     void set_sensor_type(const uchar sensor_type);
-    void set_used_graphs(const uchar num_graphs){ if(num_graphs < 8) usedGraphs = num_graphs; }
+    void set_used_graphs(const uchar num_graphs){ if(num_graphs < 9) usedGraphs = num_graphs; }
     void set_sample_period(const quint32 sample){ samplePeriod = sample; }
     void set_raw_data(const QVector <quint32> &data){ globalRawData = data; }
 

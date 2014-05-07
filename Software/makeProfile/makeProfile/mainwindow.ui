@@ -533,7 +533,7 @@
      <x>0</x>
      <y>0</y>
      <width>837</width>
-     <height>25</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuInterface">
@@ -541,14 +541,12 @@
      <string>Sensor</string>
     </property>
     <addaction name="actionUS_Sensor"/>
-    <addaction name="actionAccelerometer"/>
-    <addaction name="actionGyroscope"/>
     <addaction name="actionGPS"/>
-    <addaction name="actionCompass"/>
     <addaction name="actionAltimiter"/>
     <addaction name="actionIR_Sensor"/>
     <addaction name="actionFake_Sensor"/>
     <addaction name="actionLight_Sensor"/>
+    <addaction name="action9_DOF"/>
    </widget>
    <widget class="QMenu" name="menuInterface_2">
     <property name="title">
@@ -660,6 +658,11 @@
   <action name="actionLight_Sensor">
    <property name="text">
     <string>Light Sensor</string>
+   </property>
+  </action>
+  <action name="action9_DOF">
+   <property name="text">
+    <string>9 DOF</string>
    </property>
   </action>
  </widget>
