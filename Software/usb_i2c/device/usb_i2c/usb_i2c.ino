@@ -27,7 +27,9 @@ typedef enum _BurstOpcode
   BurstOpcode_NOP = 0,
   BurstOpcode_Read = 1,
   BurstOpcode_Write = 2,
-  BurstOpcode_WriteNoStop = 3
+  BurstOpcode_WriteNoStop = 3,
+  BurstOpcode_DelayMS = 4,
+  BurstOpcode_DelayUS = 5
 } BurstOpcode;
 
 typedef struct _BurstProgram
@@ -138,8 +140,13 @@ void runProgram(BurstProgram *prog)
   while(i <= (45 - 3))
   {
     uint8_t opcode = prog->program[i++]; // Opcode.
-    uint8_t addr = prog->program[i++];   // Address.
-    uint8_t sz = prog->program[i++];     // Size.
+    uint8_t addr = 0, sz = 0;
+
+    if(opcode != BurstOpcode_DelayMS && opcode != BurstOpcode_DelayUS)
+    {
+      addr = prog->program[i++];   // Address.
+      sz = prog->program[i++];     // Size.
+    }
 
     switch(opcode)
     {
@@ -190,6 +197,20 @@ void runProgram(BurstProgram *prog)
         // Complete the transaction.
         Wire.endTransmission(I2C_NOSTOP);
 
+        break;
+      }
+      case BurstOpcode_DelayMS:
+      {
+        uint16_t delayVal = prog->program[i++];
+        delayVal |= prog->program[i++] << 8;
+        delay(delayVal);
+        break;
+      }
+      case BurstOpcode_DelayUS:
+      {
+        uint16_t delayVal = prog->program[i++];
+        delayVal |= prog->program[i++] << 8;
+        delayMicroseconds(delayVal);
         break;
       }
       case BurstOpcode_NOP:
@@ -333,7 +354,7 @@ void parseBurstProg(Packet *p)
 
   // Check for a valid program ID.
   if(prog->programID >= MAX_PROG)
-    programStatus = 1;
+    programStatus = 10;
 
   int i = 0; // Counter pointing into the program data.
 
@@ -341,8 +362,13 @@ void parseBurstProg(Packet *p)
   while(i <= (45 - 3))
   {
     uint8_t opcode = prog->program[i++]; // Opcode.
-    uint8_t addr = prog->program[i++];   // Address.
-    uint8_t sz = prog->program[i++];     // Size.
+    uint8_t addr = 0, sz = 0;
+
+    if(opcode != BurstOpcode_DelayMS && opcode != BurstOpcode_DelayUS)
+    {
+      addr = prog->program[i++];   // Address.
+      sz = prog->program[i++];     // Size.
+    }
 
     switch(opcode)
     {
@@ -358,21 +384,29 @@ void parseBurstProg(Packet *p)
         // The write data must appear after.
         i += sz;
         break;
+      case BurstOpcode_DelayMS:
+        // A 16-bit delay value must appear after.
+        i += 2;
+        break;
+      case BurstOpcode_DelayUS:
+        // A 16-bit delay value must appear after.
+        i += 2;
+        break;
       case BurstOpcode_NOP:
         break;
       default:
-        programStatus = 2;
+        programStatus = 11;
         break;
     }
   }
 
   // Check we don't read too much data.
   if(readTotal > 48)
-    programStatus = 2;
+    programStatus = 12;
 
   // Check we don't get write data past the end of the program data.
   if(i > 45)
-    programStatus = 2;
+    programStatus = 13;
 
   // If the program is valid, load it.
   if(programStatus == 0)
