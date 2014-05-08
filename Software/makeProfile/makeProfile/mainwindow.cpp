@@ -48,14 +48,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->statusBar->showMessage(QString("Starting sensor monitoring."),1000);
     numSamples = 0;
-//    on_actionFake_Sensor_triggered();
-    on_actionLight_Sensor_triggered();
+    //    on_actionFake_Sensor_triggered();
+    //    on_actionLight_Sensor_triggered();
+    device->select_sudo_sensor();
+    connect(device,SIGNAL(raw_data_ready(QVector<QVector<qint32> >)),this,SLOT(plotSensor(QVector<QVector<qint32> >)));
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete usb;
     delete timer;
 }
 
@@ -260,6 +261,7 @@ void MainWindow::on_actionLight_Sensor_triggered()
     ui->mainPlot->plotLayout()->removeAt(0);
     ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Light Live Data"));
     ui->statusBar->showMessage(QString("Plotting Light Sensor."),2000);
+    //    device->get_light_sensor()->start();   // Start lightsensor thread
     timer->start(1000); // Start sampling at 1 second
 }
 
@@ -402,6 +404,46 @@ void MainWindow::sampleData(){
             ui->plainTextOutput->insertPlainText(QString("%1) '%2'\n").arg(ui->checkBoxData3->text(), QString::number((float)sum2/size)));
         ui->plainTextOutput->insertPlainText("\n");
     }
+    ui->plainTextOutput->ensureCursorVisible();
+}
+
+void MainWindow::plotSensor(const QVector <QVector <qint32> > &data){
+    double et = data.at(data.size()-1).at(0)/1000.0;
+    qint32 da = data.at(data.size()-1).at(1);
+
+    ui->mainPlot->graph(0)->addData(QVector<double>() << et, QVector<double>() << da);
+//    //    set_xscreen(data.at(1));
+    int tmp = 100*ui->horizontalSliderTScale->value()/ui->horizontalSliderSpeed->value();
+    int j =0;
+
+    if(data.size()-tmp-2 > 0){
+        lsg0.resize(tmp+1);
+        for(int i = data.size()-1; i > data.size()-2-tmp;i--){
+            lsg0[j++]=data.at(i).at(1);
+        }
+    }
+    else{
+        //lsg0 = data.at(1);
+        lsg0.resize(data.size());
+        for(int i = 0; i < data.size(); i++){
+            lsg0[i] = data.at(i).at(1);
+        }
+    }
+
+    ui->mainPlot->rescaleAxes();
+
+    if(!autoScale)
+        ui->mainPlot->yAxis->setScaleRatio(refPlot->xAxis,ui->spinBoxData->value()*5);
+
+    if(elapsedTime/1000.0 > ui->horizontalSliderTScale->value())
+        ui->mainPlot->xAxis->setRange(elapsedTime/1000.0 - ui->horizontalSliderTScale->value(), elapsedTime/1000.0);
+
+    if(autoScale){
+        ui->mainPlot->yAxis->setRange(find_axis_range(lsg0));
+    }
+    ///////
+    ui->mainPlot->replot();
+    ui->plainTextOutput->insertPlainText(QString::number(et) + QString(":\n%1)\t").arg(ui->checkBoxData1->text()) + QString::number(da)+"\n\n");
     ui->plainTextOutput->ensureCursorVisible();
 }
 
@@ -816,7 +858,7 @@ void MainWindow::on_horizontalSliderSpeed_valueChanged(int value)
     if(!ui->pushButtonPauseResume->isChecked())
         timer->start(value*10);
     emit time_changed(value*10);
-    device->get_ads1015()->program(value*10);
+    //    device->get_ads1015()->program(value*10);
 }
 
 void MainWindow::on_spinBoxSpeed_valueChanged(int arg1)

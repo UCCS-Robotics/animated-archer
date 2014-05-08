@@ -164,7 +164,7 @@ void LightSensor::burstResult(quint8 programID, quint32 timeStamp, const QByteAr
     QDateTime stamp = mConnectTime.addMSecs(timeStamp - mFirstStamp);
 
     // Notify the graph about the new sensor data.
-    emit sensorData(QVector<float>() << stamp.toMSecsSinceEpoch() << visible);
+    emit sensorData(stamp, QVector<qint32>() << visible);
 }
 
 void LightSensor::transactionComplete(const DeviceTransactionPtr& trans)

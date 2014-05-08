@@ -15,6 +15,7 @@
 
 #include <QObject>
 #include <QVector>
+#include <QTimer>
 #include "LightSensor.h"
 #include "fakesensor.h"
 #include "ads1015.h"
@@ -44,13 +45,14 @@ public:
 
     void clear_data();
     void stop_all_sensors();
+    void switch_sensor();
 
     //////////////////////////////////////////////////
 
     uchar get_sensor_type() const { return sensorType;}
     uchar get_used_graphs() const { return usedGraphs; }
-    quint32 get_samplePeriod() const { return samplePeriod; }
-    const QVector <QVector <float> > &get_data_raw() const { return globalRawData; }
+    quint32 get_sample_period() const { return samplePeriod; }
+    const QVector <QVector <qint32> > &get_data_raw() const { return globalRawData; }
     const QVector <QVector <float> > &get_data() const { return globalData; }
 
     FakeSensor *get_sudo_sensor() const { return fakesensor; }
@@ -63,14 +65,16 @@ public:
     void set_sensor_type(const uchar sensor_type);
     void set_used_graphs(const uchar num_graphs){ if(num_graphs < 9) usedGraphs = num_graphs; }
     void set_sample_period(const quint32 sample){ samplePeriod = sample; }
-    void set_raw_data(const QVector <QVector <float> > &data){ globalRawData = data; }
+    void set_raw_data(const QVector <QVector <qint32> > &data){ globalRawData = data; }
+    void set_data(const QVector <QVector <float> > &data){ globalData = data; }
 
     //////////////////////////////////////////////////
 
 signals:
+    void raw_data_ready(const QVector < QVector<qint32> > &data);
 
 public slots:
-    void recordSensor(const QVector<float> &data);
+    void recordSensor(const QDateTime &time_cast, const QVector<qint32> &data);
 
 private:
     MainWindow *mainwindow;
@@ -83,9 +87,10 @@ private:
     uchar sensorType, usedGraphs;
     quint32 samplePeriod;
     quint64 elapsedTime;
-    QVector <QVector <float> > globalRawData;
+    QVector <QVector <qint32> > globalRawData;
     QVector <QVector <float> > globalData;
     QDateTime currentTime;
+    QTimer *timer;
 
 public:
 

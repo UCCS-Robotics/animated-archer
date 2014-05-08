@@ -22,7 +22,7 @@ private slots:
     void burstResult(quint8 programID, quint32 timeStamp, const QByteArray& data);
 
 signals:
-    void sensorData(const QVector<float>& data);  // format: [stamp.ms,value,channel]
+    void sensorData(const QDateTime &,const QVector<qint32>& data);  // format: [stamp.ms,value,channel]
 
 public slots:
     void program(qint16 delay_ms);

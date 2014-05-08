@@ -122,6 +122,7 @@ private slots:
     void on_pushButtonSample_clicked();
 
     void on_action9_DOF_triggered();
+    void plotSensor(const QVector <QVector <qint32> > &data);
 
 private:
     Ui::MainWindow *ui;
