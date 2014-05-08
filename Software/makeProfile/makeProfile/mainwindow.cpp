@@ -260,7 +260,6 @@ void MainWindow::on_actionLight_Sensor_triggered()
     ui->mainPlot->plotLayout()->removeAt(0);
     ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Light Live Data"));
     ui->statusBar->showMessage(QString("Plotting Light Sensor."),2000);
-    device->get_light_sensor()->start();   // Start lightsensor thread
     timer->start(1000); // Start sampling at 1 second
 }
 

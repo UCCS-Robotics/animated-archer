@@ -25,7 +25,7 @@ private slots:
     void on_change_time(qint32);
 
 signals:
-    void sensorData(const QDateTime& stamp, quint16);
+    void sensorData(const QVector<float>& data);
 
 private:
     uint32_t mFirstStamp;

@@ -2,6 +2,7 @@
 #include "deviceconnection.h"
 
 #include <iostream>
+#include <QVector>
 
 #define ADS1015_ADDRESS (0x48)
 
@@ -121,7 +122,7 @@ void ADS1015::burstResult(quint8 programID, quint32 timeStamp, const QByteArray&
         if((i + offset) == 0)
         {
             std::cout << "Channel " << (i + offset) << ": " << val << std::endl;
-            emit sensorData(stamp, i + offset, val);
+            emit sensorData( QVector<float>() << stamp.toMSecsSinceEpoch() << val << i + offset);
         }
     }
 }

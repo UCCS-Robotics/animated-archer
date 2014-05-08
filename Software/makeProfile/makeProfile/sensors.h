@@ -15,7 +15,7 @@
 
 #include <QObject>
 #include <QVector>
-#include "sensorthread.h"
+#include "LightSensor.h"
 #include "fakesensor.h"
 #include "ads1015.h"
 #include "device.h"
@@ -50,12 +50,12 @@ public:
     uchar get_sensor_type() const { return sensorType;}
     uchar get_used_graphs() const { return usedGraphs; }
     quint32 get_samplePeriod() const { return samplePeriod; }
-    const QVector <quint32> &get_data_raw() const { return globalRawData; }
-    const QVector <double> &get_data() const { return globalData; }
+    const QVector <QVector <float> > &get_data_raw() const { return globalRawData; }
+    const QVector <QVector <float> > &get_data() const { return globalData; }
 
     FakeSensor *get_sudo_sensor() const { return fakesensor; }
     ADS1015 *get_ads1015() const { return adcsensor; }
-    SensorThread *get_light_sensor() const { return lightsensor; }
+    LightSensor *get_light_sensor() const { return lightsensor; }
 
 
     //////////////////////////////////////////////////
@@ -63,25 +63,29 @@ public:
     void set_sensor_type(const uchar sensor_type);
     void set_used_graphs(const uchar num_graphs){ if(num_graphs < 9) usedGraphs = num_graphs; }
     void set_sample_period(const quint32 sample){ samplePeriod = sample; }
-    void set_raw_data(const QVector <quint32> &data){ globalRawData = data; }
+    void set_raw_data(const QVector <QVector <float> > &data){ globalRawData = data; }
 
     //////////////////////////////////////////////////
 
 signals:
 
 public slots:
+    void recordSensor(const QVector<float> &data);
 
 private:
     MainWindow *mainwindow;
 
-    SensorThread *lightsensor;
+    LightSensor *lightsensor;
     ADS1015 *adcsensor;
     FakeSensor *fakesensor;
+    Device *usb;
+
     uchar sensorType, usedGraphs;
     quint32 samplePeriod;
-    QVector <quint32> globalRawData;
-    QVector <double> globalData;
-    Device *usb;
+    quint64 elapsedTime;
+    QVector <QVector <float> > globalRawData;
+    QVector <QVector <float> > globalData;
+    QDateTime currentTime;
 
 public:
 

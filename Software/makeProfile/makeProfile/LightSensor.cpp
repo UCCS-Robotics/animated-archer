@@ -2,6 +2,7 @@
 #include "deviceconnection.h"
 
 #include <iostream>
+#include <QVector>
 
 #define TSL2561_ADDR_FLOAT        (0x39)
 
@@ -163,7 +164,7 @@ void LightSensor::burstResult(quint8 programID, quint32 timeStamp, const QByteAr
     QDateTime stamp = mConnectTime.addMSecs(timeStamp - mFirstStamp);
 
     // Notify the graph about the new sensor data.
-    emit sensorData(stamp, visible);
+    emit sensorData(QVector<float>() << stamp.toMSecsSinceEpoch() << visible);
 }
 
 void LightSensor::transactionComplete(const DeviceTransactionPtr& trans)

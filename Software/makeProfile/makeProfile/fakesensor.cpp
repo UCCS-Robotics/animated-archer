@@ -13,7 +13,7 @@ void FakeSensor::update(){
     QDateTime stamp = QDateTime::currentDateTime();
 
     // Notify the graph about the new sensor data.
-    emit sensorData(stamp, rand()%1500, rand()%1000, rand()%500);
+    emit sensorData(QVector<float> () << rand()%1500 << rand()%1000 << rand()%500);
 }
 
 void FakeSensor::run(){
