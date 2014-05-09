@@ -131,7 +131,7 @@ void MainWindow::stop_all_sensors(){
 //Ultrasonic Sensor
 void MainWindow::on_actionUS_Sensor_triggered()
 {
-    device->select_ultra_sonic();
+    device->select_ads1015();
     usedAxes = device->get_used_graphs();
     sensor = (char)device->get_sensor_type();
     sensor_switched();

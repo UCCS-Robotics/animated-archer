@@ -652,7 +652,7 @@
   </action>
   <action name="actionFake_Sensor">
    <property name="text">
-    <string>Imaginary Sensor</string>
+    <string>Sudo Sensor</string>
    </property>
   </action>
   <action name="actionLight_Sensor">
