@@ -12,6 +12,7 @@ sensors::sensors(MainWindow *mainwindowin, QObject *parent) :
     connect(usb, SIGNAL(deviceError(QString)),
             this, SLOT(on_device_error(QString)));  // Relay error
     set_sample_period(500); // Temporary, remove later
+    set_number_samples(0);
     set_conversion_flag(false);
 }
 
@@ -31,8 +32,19 @@ void sensors::on_device_error(QString error){
 
 void sensors::on_record_sensor(const QDateTime &time_cast, const QVector<qint32> &data){
     // Format: [stamp.ms,graph0,graph1,...]
-    elapsedTime += time_cast.toMSecsSinceEpoch() -
-            currentTime.toMSecsSinceEpoch(); // Add time since last sample to elapsed time
+    if(globalRawData.size() == get_number_samples() && // if num samples defined and reached
+            get_number_samples() != 0){
+        stop_all_sensors();
+        return;
+    }
+
+    // Stop giving that damn negative time, instead, make up a new time
+    if(time_cast.toMSecsSinceEpoch() - currentTime.toMSecsSinceEpoch() >= 0)
+        elapsedTime += time_cast.toMSecsSinceEpoch() -
+                currentTime.toMSecsSinceEpoch(); // Add time since last sample to elapsed time
+    else
+        elapsedTime += get_sample_period(); // Just keep the ball rolling
+
     globalRawData.push_back(QVector<qint32>() << elapsedTime << data);
     currentTime = QDateTime::currentDateTime();
     if(get_conversion_flag())
@@ -108,7 +120,7 @@ void sensors::clear_data(){
 }
 
 void sensors::convert_data(){
-    stop_all_sensors();
+    stop_all_sensors(); // Since this will be converting all data, kill all ongoing actions
     globalData.resize(globalRawData.size());
     for(qint32 i = 0; i < globalRawData.size(); i++){
         globalData[i] = convert_immediate_data(globalRawData.at(i));

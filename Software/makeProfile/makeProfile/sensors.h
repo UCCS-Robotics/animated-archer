@@ -152,6 +152,13 @@ public:
     LightSensor *get_light_sensor() const { return lightsensor; }
 
     /////////////////////////////////////////////////////////////////////
+    /// \brief get_number_samples
+    /// \return
+    /// Returns the number of samples that the object will record
+    /////////////////////////////////////////////////////////////////////
+    qint32 get_number_samples() const { return numSamples; }
+
+    /////////////////////////////////////////////////////////////////////
     /// \brief get_sample_period
     /// \return samplePeriod
     /// Returns the current sample period for the devices
@@ -189,6 +196,14 @@ public:
     /// Sets the conversion flag for the sensors
     /////////////////////////////////////////////////////////////////////
     void set_conversion_flag(bool convert){ convertDataFlag = convert; }
+
+    /////////////////////////////////////////////////////////////////////
+    /// \brief set_number_samples
+    /// \param num_samples
+    /// Sets the number of samples to take, if value is 0, free run
+    /////////////////////////////////////////////////////////////////////
+    void set_number_samples(qint32 num_samples){
+        numSamples = num_samples; clear_data();}
 
     /////////////////////////////////////////////////////////////////////
     /// \brief set_sample_period
@@ -244,6 +259,7 @@ private:
     QDateTime currentTime;  // ... Self explanitory? It's for the timestamps
     QTimer *timer;  // Used to trigger the fake sensor
     bool convertDataFlag;   // Flag to run conversion on incoming data
+    qint32 numSamples;
 
 private:
     /////////////////////////////////////////////////////////////////////
