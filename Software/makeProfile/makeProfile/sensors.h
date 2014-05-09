@@ -1,7 +1,7 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
-#define ULTRASONIC 1
+#define ADC 1
 #define ACCELEROMETER 2
 #define GYROSCOPE 3
 #define THERMOMETER 4
@@ -86,6 +86,14 @@ public:
      *******************************************************************/
 
     /////////////////////////////////////////////////////////////////////
+    /// \brief convert_data
+    /// \param data
+    /// \return convertedData
+    /// Convert the existing raw data, only when conversion flag is set
+    /////////////////////////////////////////////////////////////////////
+    void convert_data();
+
+    /////////////////////////////////////////////////////////////////////
     /// \brief sensors::clear_data
     /// Clear data, primarily used after switching sensors
     /////////////////////////////////////////////////////////////////////
@@ -116,11 +124,11 @@ public:
     ADS1015 *get_ads1015() const { return adcsensor; }
 
     /////////////////////////////////////////////////////////////////////
-    /// \brief get_data_raw
-    /// \return globalRawData
-    /// Returns the raw data received from the devices
+    /// \brief get_conversion_flag
+    /// \return
+    /// Returns the status of the conversion flag
     /////////////////////////////////////////////////////////////////////
-    const QVector <QVector <qint32> > &get_data_raw() const { return globalRawData; }
+    bool get_conversion_flag() const { return convertDataFlag; }
 
     /////////////////////////////////////////////////////////////////////
     /// \brief get_data
@@ -128,6 +136,13 @@ public:
     /// Returns the converted data received from the devices
     /////////////////////////////////////////////////////////////////////
     const QVector <QVector <float> > &get_data() const { return globalData; }
+
+    /////////////////////////////////////////////////////////////////////
+    /// \brief get_data_raw
+    /// \return globalRawData
+    /// Returns the raw data received from the devices
+    /////////////////////////////////////////////////////////////////////
+    const QVector <QVector <qint32> > &get_data_raw() const { return globalRawData; }
 
     /////////////////////////////////////////////////////////////////////
     /// \brief get_light_sensor
@@ -144,9 +159,9 @@ public:
     quint32 get_sample_period() const { return samplePeriod; }
 
     /////////////////////////////////////////////////////////////////////
-    /// \brief sensors::set_sensor_type
-    /// \param sensor_type
-    /// Used to set which sensor is currently in use
+    /// \brief sensors::get_sensor_type
+    /// \return sensorType
+    /// Used to get the sensor that is currently in use
     /////////////////////////////////////////////////////////////////////
     uchar get_sensor_type() const { return sensorType;}
 
@@ -169,18 +184,11 @@ public:
      *******************************************************************/
 
     /////////////////////////////////////////////////////////////////////
-    /// \brief set_sensor_type
-    /// \param sensor_type
-    /// Sets the sensor type
+    /// \brief set_conversion_flag
+    /// \param convert
+    /// Sets the conversion flag for the sensors
     /////////////////////////////////////////////////////////////////////
-    void set_sensor_type(const uchar sensor_type);
-
-    /////////////////////////////////////////////////////////////////////
-    /// \brief set_used_graphs
-    /// \param num_graphs
-    /// Sets the number of used graphs
-    /////////////////////////////////////////////////////////////////////
-    void set_used_graphs(const uchar num_graphs){ if(num_graphs < 9) usedGraphs = num_graphs; }
+    void set_conversion_flag(bool convert){ convertDataFlag = convert; }
 
     /////////////////////////////////////////////////////////////////////
     /// \brief set_sample_period
@@ -189,34 +197,27 @@ public:
     /////////////////////////////////////////////////////////////////////
     void set_sample_period(const quint32 sample){ samplePeriod = sample; }
 
-    /////////////////////////////////////////////////////////////////////
-    /// \brief set_raw_data
-    /// \param data
-    /// Sets the raw data from the sensor, just in case it's ever needed
-    /////////////////////////////////////////////////////////////////////
-    void set_raw_data(const QVector <QVector <qint32> > &data){ globalRawData = data; }
-
-    /////////////////////////////////////////////////////////////////////
-    /// \brief set_data
-    /// \param data
-    /// Sets the converted data from the sensor, just in case
-    /////////////////////////////////////////////////////////////////////
-    void set_data(const QVector <QVector <float> > &data){ globalData = data; }
-
 signals:
-    /////////////////////////////////////////////////////////////////////
-    /// \brief raw_data_ready
-    /// Emitted when the raw data is ready for processing
-    /////////////////////////////////////////////////////////////////////
-    void raw_data_ready(const QVector < QVector<qint32> > &);
-
     /////////////////////////////////////////////////////////////////////
     /// \brief device_error
     /// Emitted when the device encounters an error
     /////////////////////////////////////////////////////////////////////
     void device_error(QString);
 
+    /////////////////////////////////////////////////////////////////////
+    /// \brief raw_data_ready
+    /// Emitted when the raw data is ready for processing
+    /////////////////////////////////////////////////////////////////////
+    void raw_data_ready(const QVector < QVector<qint32> > &);
+
 public slots:
+    /////////////////////////////////////////////////////////////////////
+    /// \brief sensors::on_device_error
+    /// \param error
+    /// Slot used to relay error out of the object
+    /////////////////////////////////////////////////////////////////////
+    void on_device_error(QString error);
+
     /////////////////////////////////////////////////////////////////////
     /// \brief sensors::recordSensor
     /// \param time_cast
@@ -224,14 +225,7 @@ public slots:
     /// Slot to receive live raw data from the device. Calculates elapsed
     /// time and saves the time and data to globalRawData.
     /////////////////////////////////////////////////////////////////////
-    void recordSensor(const QDateTime &time_cast, const QVector<qint32> &data);
-
-    /////////////////////////////////////////////////////////////////////
-    /// \brief sensors::on_device_error
-    /// \param error
-    /// Slot used to relay error out of the object
-    /////////////////////////////////////////////////////////////////////
-    void on_device_error(QString error);
+    void on_record_sensor(const QDateTime &time_cast, const QVector<qint32> &data);
 
 private:
     MainWindow *mainwindow;
@@ -249,10 +243,44 @@ private:
     QVector <QVector <float> > globalData;  // Converted data from sensors
     QDateTime currentTime;  // ... Self explanitory? It's for the timestamps
     QTimer *timer;  // Used to trigger the fake sensor
+    bool convertDataFlag;   // Flag to run conversion on incoming data
 
-public:
+private:
+    /////////////////////////////////////////////////////////////////////
+    /// \brief convert_immediate_data
+    /// \param data
+    /// \return convertedData
+    /// Convert the incoming raw data, only when conversion flag is set
+    /////////////////////////////////////////////////////////////////////
+    QVector<float> convert_immediate_data(QVector<qint32> data);
 
+    /////////////////////////////////////////////////////////////////////
+    /// \brief set_data
+    /// \param data
+    /// Sets the converted data from the sensor, just in case
+    /////////////////////////////////////////////////////////////////////
+    void set_data(const QVector <QVector <float> > &data){ globalData = data; }
 
+    /////////////////////////////////////////////////////////////////////
+    /// \brief set_raw_data
+    /// \param data
+    /// Sets the raw data from the sensor, just in case it's ever needed
+    /////////////////////////////////////////////////////////////////////
+    void set_raw_data(const QVector <QVector <qint32> > &data){ globalRawData = data; }
+
+    /////////////////////////////////////////////////////////////////////
+    /// \brief set_sensor_type
+    /// \param sensor_type
+    /// Sets the sensor type
+    /////////////////////////////////////////////////////////////////////
+    void set_sensor_type(const uchar sensor_type);
+
+    /////////////////////////////////////////////////////////////////////
+    /// \brief set_used_graphs
+    /// \param num_graphs
+    /// Sets the number of used graphs
+    /////////////////////////////////////////////////////////////////////
+    void set_used_graphs(const uchar num_graphs){ if(num_graphs < 9) usedGraphs = num_graphs; }
 };
 
 #endif // SENSORS_H

@@ -48,9 +48,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->statusBar->showMessage(QString("Starting sensor monitoring."),1000);
     numSamples = 0;
-    //    on_actionFake_Sensor_triggered();
+        on_actionFake_Sensor_triggered();
     //    on_actionLight_Sensor_triggered();
-    device->select_sudo_sensor();
+//    device->select_sudo_sensor();
+//    device->select_ads1015();
     connect(device,SIGNAL(raw_data_ready(QVector<QVector<qint32> >)),this,SLOT(plotSensor(QVector<QVector<qint32> >)));
 }
 
@@ -210,7 +211,6 @@ void MainWindow::on_actionFake_Sensor_triggered()
     device->select_sudo_sensor();
     usedAxes = device->get_used_graphs();
     sensor = device->get_sensor_type();
-    stop_all_sensors();
     if(device->get_sensor_type() != FAKE){
         globalData.resize(0);
         globalData1.resize(0);
@@ -220,7 +220,7 @@ void MainWindow::on_actionFake_Sensor_triggered()
         ui->mainPlot->graph(1)->clearData();
         ui->mainPlot->graph(2)->clearData();
     }
-    device->set_sensor_type(FAKE);
+    //device->set_sensor_type(FAKE);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -231,7 +231,6 @@ void MainWindow::on_actionFake_Sensor_triggered()
     ui->mainPlot->plotLayout()->removeAt(0);
     ui->mainPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(ui->mainPlot, "Fake Live Data"));
     ui->statusBar->showMessage(QString("Plotting Fake Sensor."),2000);
-    device->get_sudo_sensor()->start();
     timer->start(1000); // Start sampling at 1 second
 }
 
@@ -250,7 +249,7 @@ void MainWindow::on_actionLight_Sensor_triggered()
         ui->mainPlot->graph(1)->clearData();
         ui->mainPlot->graph(2)->clearData();
     }
-    device->set_sensor_type(LIGHT);
+    //device->set_sensor_type(LIGHT);
     sensor_switched();
     ui->checkBoxData1->show();
     ui->labelBlue->show();
@@ -269,7 +268,7 @@ void MainWindow::on_actionLight_Sensor_triggered()
 void MainWindow::on_radioRaw_clicked()
 {
     switch(device->get_sensor_type()){
-    case ULTRASONIC:
+    case ADC:
         ui->mainPlot->yAxis->setLabel("ADC Voltage");
         break;
     case ACCELEROMETER:
@@ -316,7 +315,7 @@ void MainWindow::sensor_switched(){
 void MainWindow::on_radioConvert_clicked()
 {
     switch(device->get_sensor_type()){
-    case ULTRASONIC:
+    case ADC:
         ui->mainPlot->yAxis->setLabel("Distance (mm)");
         break;
     case ACCELEROMETER:
