@@ -8,6 +8,7 @@
 #include <QList>
 #include "qcustomplot.h"
 #include "sensors.h"
+#include "plotter.h"
 
 namespace Ui {
 class MainWindow;
@@ -20,6 +21,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    QCustomPlot *get_qplot();
 
 private:
     void sensor_switched();
@@ -137,6 +139,7 @@ private:
     QCustomPlot *refPlot;
     QClipboard *clipboard;
     sensors *device;
+    Plotter *mainPlot;
 };
 
 #endif // MAINWINDOW_H

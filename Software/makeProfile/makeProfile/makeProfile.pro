@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     fakesensor.cpp \
     burstprogram.cpp \
     ads1015.cpp \
-    sensors.cpp
+    sensors.cpp \
+    plotter.cpp
 
 HEADERS  += mainwindow.h \
     qcustomplot.h \
@@ -42,7 +43,8 @@ HEADERS  += mainwindow.h \
     fakesensor.h / \
     ads1015.h \
     burstprogram.h \
-    sensors.h
+    sensors.h \
+    plotter.h
     burstprogram.h
 
 FORMS    += mainwindow.ui

@@ -53,12 +53,17 @@ MainWindow::MainWindow(QWidget *parent) :
 //    device->select_sudo_sensor();
 //    device->select_ads1015();
     connect(device,SIGNAL(raw_data_ready(QVector<QVector<qint32> >)),this,SLOT(plotSensor(QVector<QVector<qint32> >)));
+    mainPlot = new Plotter(this);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
     delete timer;
+}
+
+QCustomPlot *MainWindow::get_qplot(){
+    return ui->mainPlot;
 }
 
 // Option to take samples instead of streaming live data
