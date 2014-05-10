@@ -162,8 +162,11 @@ void Plotter::set_xAxis_scale(int scale){
 void Plotter::set_xWindow_range(quint32 data_points){
     dataPoints = data_points;
 
-    mainPlot->xAxis->setRange(usedGraphs.begin().value()->data()->end().key()-dataPoints,//Max - #data points (min)
-                              usedGraphs.begin().value()->data()->end().key()); //Max
+    double lower, upper;
+    lower = (double)usedGraphs.begin().value()->data()->size()-(double)dataPoints;
+    upper = usedGraphs.begin().value()->data()->size();
+    mainPlot->xAxis->setRange(lower,//Max - #data points (min)
+                              upper); //Max
 }
 
 void Plotter::set_yAxis_range(double lower, double upper){
