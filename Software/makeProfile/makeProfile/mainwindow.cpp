@@ -215,6 +215,7 @@ void MainWindow::on_actionIR_Sensor_triggered()
 
 void MainWindow::on_actionFake_Sensor_triggered()
 {
+    device->set_sample_period(500);
     device->select_sudo_sensor();
     mainPlot->remove_all_graphs();
     mainPlot->create_graph("Fake 1");
@@ -409,6 +410,8 @@ void MainWindow::sampleData(){
 
 void MainWindow::plotSensor(const QVector <QVector <qint32> > &data){
     mainPlot->add_graph_data("Fake 1", data.at(data.size()-1).at(0)/1000.0, data.at(data.size()-1).at(1));
+    mainPlot->set_xWindow_range(10);
+    mainPlot->set_number_xData_points(10/0.5);
     mainPlot->set_auto_range_scale(true);
     mainPlot->update_plot();
 //    double et = data.at(data.size()-1).at(0)/1000.0;

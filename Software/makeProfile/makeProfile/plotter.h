@@ -241,6 +241,8 @@ public:
     /////////////////////////////////////////////////////////////////////
     void set_xAxis_scale(int scale);
 
+    void set_xWindow_range(quint32 data_points);
+
     /////////////////////////////////////////////////////////////////////
     /// \brief set_yAxis1
     /// \param name
@@ -418,7 +420,6 @@ private:
     /////////////////////////////////////////////////////////////////////
     void set_used_graphs(const QMap<QString, QCPGraph*> &used_graphs){ usedGraphs = used_graphs; }
 
-    void set_xWindow_range(quint32 data_points);
 
     void set_yWindow_range(double minimum_value, double maximum_value);
     /********************************************************************

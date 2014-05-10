@@ -24,10 +24,9 @@ void Plotter::add_graph_data(QString graph_name,
                              const QVector<double> &yData){
     if(usedGraphs.contains(graph_name))
         usedGraphs.value(graph_name)->addData(xData,yData);
-    set_xWindow_range(dataPoints);
     if(autoRangeScale){
-        auto_find_yAxis_range();
         mainPlot->yAxis->rescale(true);
+        auto_find_yAxis_range();
     }
 }
 
@@ -40,6 +39,7 @@ void Plotter::auto_find_yAxis_range(){
     QMapIterator <QString, QCPGraph*> graphIterator(usedGraphs);
     bool allocated = false;
     quint32 i = 0;
+    double average;
 
     while(graphIterator.hasNext()){ // Cycle through graphs
         graphIterator.next();
@@ -48,6 +48,7 @@ void Plotter::auto_find_yAxis_range(){
         // number of data points has been reached, from this list find the min and max
         // to auto set yAxis range
         while (dataIterator != graphIterator.value()->data()->constBegin() && i < dataPoints) {
+            --dataIterator;
             if(!allocated){
                 allocated = true;
                 minimumValue = dataIterator.value().value;
@@ -61,10 +62,11 @@ void Plotter::auto_find_yAxis_range(){
                 maximumValue = dataIterator.value().value;
 
             ++i;
-            --dataIterator;
         }
     }
-
+    average = (minimumValue + maximumValue)/2;
+    minimumValue -= average*0.1;
+    maximumValue += average*0.1;
     set_yWindow_range(minimumValue, maximumValue);
 }
 
@@ -161,10 +163,13 @@ void Plotter::set_xAxis_scale(int scale){
 
 void Plotter::set_xWindow_range(quint32 data_points){
     dataPoints = data_points;
-
+    QMap<double, QCPData>::const_iterator dataIterator;
+    dataIterator = usedGraphs.begin().value()->data()->constEnd();
+    --dataIterator;
     double lower, upper;
-    lower = (double)usedGraphs.begin().value()->data()->size()-(double)dataPoints;
-    upper = usedGraphs.begin().value()->data()->size();
+
+    lower = (double)dataIterator.key()-(double)dataPoints;
+    upper = dataIterator.key();
     mainPlot->xAxis->setRange(lower,//Max - #data points (min)
                               upper); //Max
 }
