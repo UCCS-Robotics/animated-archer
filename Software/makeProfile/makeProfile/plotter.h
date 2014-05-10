@@ -163,6 +163,13 @@ public:
      *******************************************************************/
 
     /////////////////////////////////////////////////////////////////////
+    /// \brief set_auto_range_scale
+    /// \param range_scale
+    /// Determine whether or not to auto range and scale.
+    /////////////////////////////////////////////////////////////////////
+    void set_auto_range_scale(bool range_scale) { autoRangeScale = range_scale; }
+
+    /////////////////////////////////////////////////////////////////////
     /// \brief set_graph_data
     /// \param graph_name
     /// \param xData
@@ -191,6 +198,13 @@ public:
     void set_graph_name(QString graph_name, QString new_graph_name);
 
     /////////////////////////////////////////////////////////////////////
+    /// \brief set_number_xData_points
+    /// \param data_points
+    /// Set the number of data points for the x window to fit.
+    /////////////////////////////////////////////////////////////////////
+    void set_number_xData_points(quint32 data_points){ dataPoints = data_points; }
+
+    /////////////////////////////////////////////////////////////////////
     /// \brief set_title
     /// \param title
     /// Changes the plot title to the given string.
@@ -202,7 +216,7 @@ public:
     /// \param name
     /// Sets the bottom xAxis name.
     /////////////////////////////////////////////////////////////////////
-    void set_xAxis1_label(QString name){ mainPlot->xAxis->setLabel("name"); }
+    void set_xAxis1_label(QString name){ mainPlot->xAxis->setLabel(name); }
 
     /////////////////////////////////////////////////////////////////////
     /// \brief set_xAxis2
@@ -256,6 +270,8 @@ public:
     /// scale value for the xAxis was 10.
     /////////////////////////////////////////////////////////////////////
     void set_yAxis_scale(int scale);
+
+
 signals:
 
     /////////////////////////////////////////////////////////////////////
@@ -381,6 +397,15 @@ private:
     QClipboard *clipboard;
     QString currentTitle;
     int xScale, yScale;
+    quint32 dataPoints;
+    double minimumValue, maximumValue;
+    bool autoRangeScale;
+
+    /********************************************************************
+     * Helpers                                                          *
+     *******************************************************************/
+
+    void auto_find_yAxis_range();
 
     /********************************************************************
      * Setters                                                          *
@@ -393,10 +418,18 @@ private:
     /////////////////////////////////////////////////////////////////////
     void set_used_graphs(const QMap<QString, QCPGraph*> &used_graphs){ usedGraphs = used_graphs; }
 
+    void set_xWindow_range(quint32 data_points);
+
+    void set_yWindow_range(double minimum_value, double maximum_value);
     /********************************************************************
      * Initialization                                                   *
      *******************************************************************/
 
+    /////////////////////////////////////////////////////////////////////
+    /// \brief init_plot
+    /// Initialize the plot with everything that will be used in for
+    /// sensor profiling
+    /////////////////////////////////////////////////////////////////////
     void init_plot();
 };
 

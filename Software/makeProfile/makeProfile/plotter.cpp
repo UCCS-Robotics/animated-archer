@@ -24,10 +24,48 @@ void Plotter::add_graph_data(QString graph_name,
                              const QVector<double> &yData){
     if(usedGraphs.contains(graph_name))
         usedGraphs.value(graph_name)->addData(xData,yData);
+    set_xWindow_range(dataPoints);
+    if(autoRangeScale){
+        auto_find_yAxis_range();
+        mainPlot->yAxis->rescale(true);
+    }
 }
 
 void Plotter::add_graph_data(QString graph_name, double xData, double yData){
     add_graph_data(graph_name, QVector<double>() << xData, QVector<double>() << yData);
+}
+
+void Plotter::auto_find_yAxis_range(){
+    QMap<double, QCPData>::const_iterator dataIterator;
+    QMapIterator <QString, QCPGraph*> graphIterator(usedGraphs);
+    bool allocated = false;
+    quint32 i = 0;
+
+    while(graphIterator.hasNext()){ // Cycle through graphs
+        graphIterator.next();
+        dataIterator = graphIterator.value()->data()->constEnd();
+        // Iterate through data for current graph from end until either beginning or
+        // number of data points has been reached, from this list find the min and max
+        // to auto set yAxis range
+        while (dataIterator != graphIterator.value()->data()->constBegin() && i < dataPoints) {
+            if(!allocated){
+                allocated = true;
+                minimumValue = dataIterator.value().value;
+                maximumValue = minimumValue;
+            }
+
+            if(minimumValue > dataIterator.value().value)
+                minimumValue = dataIterator.value().value;
+
+            if(maximumValue < dataIterator.value().value)
+                maximumValue = dataIterator.value().value;
+
+            ++i;
+            --dataIterator;
+        }
+    }
+
+    set_yWindow_range(minimumValue, maximumValue);
 }
 
 void Plotter::clear_all_graph_data(){
@@ -121,6 +159,13 @@ void Plotter::set_xAxis_scale(int scale){
     mainPlot->xAxis->setScaleRatio(refPlot->yAxis,scale);
 }
 
+void Plotter::set_xWindow_range(quint32 data_points){
+    dataPoints = data_points;
+
+    mainPlot->xAxis->setRange(usedGraphs.begin().value()->data()->end().key()-dataPoints,//Max - #data points (min)
+                              usedGraphs.begin().value()->data()->end().key()); //Max
+}
+
 void Plotter::set_yAxis_range(double lower, double upper){
     mainPlot->yAxis->setRangeLower(lower);
     mainPlot->yAxis->setRangeUpper(upper);
@@ -133,6 +178,10 @@ void Plotter::set_yAxis_scale(int scale){
         refPlot->yAxis = mainPlot->yAxis;
 
     mainPlot->yAxis->setScaleRatio(refPlot->xAxis,scale);
+}
+
+void Plotter::set_yWindow_range(double minimum_value, double maximum_value){
+    mainPlot->yAxis->setRange(minimum_value, maximum_value);
 }
 
 /********************************************************************
@@ -192,6 +241,7 @@ void Plotter::on_copy_graph_data(){
                 dataIterator = i.value()->data()->constBegin();
                 while (dataIterator != i.value()->data()->constEnd()){    // Copy data to output string
                     output += QString::number(dataIterator.value().key) + "\t" + QString::number(dataIterator.value().value) + "\n";
+                    ++dataIterator;
                 }
                 break;
             }
@@ -377,9 +427,14 @@ void Plotter::init_plot(){
     mainPlot->xAxis->setDateTimeFormat("mm:ss:zzz");
     mainPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
 
+    mainPlot->plotLayout()->insertRow(0);
     set_title("Live Data");
+
     set_xAxis1_label("Time (sec)");
     set_yAxis1_label("Data");
+
+    dataPoints = 10;
+    autoRangeScale = true;
 
     // Used for scaling
     refPlot = mainPlot;
