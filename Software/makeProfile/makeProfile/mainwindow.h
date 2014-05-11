@@ -105,14 +105,6 @@ private slots:
 
     void on_actionFake_Sensor_triggered();
 
-    void titleDoubleClick(QMouseEvent *event, QCPPlotTitle *title);
-    void axisLabelDoubleClick(QCPAxis* axis, QCPAxis::SelectablePart part);
-    void legendDoubleClick(QCPLegend* legend, QCPAbstractLegendItem* item);
-    void selectionChanged();
-    void mousePress();
-    void mouseWheel();
-    void contextMenuRequest(QPoint pos);
-    void moveLegend();
     void graphClicked(QCPAbstractPlottable *plottable);
     void graphCopy();
     void windowCopy();

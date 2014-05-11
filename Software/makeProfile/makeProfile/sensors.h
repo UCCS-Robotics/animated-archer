@@ -1,18 +1,19 @@
 #ifndef SENSORS_H
 #define SENSORS_H
+// NOTE: Add update sensor sample period
 
-#define ADC 1
-#define ACCELEROMETER 2
-#define GYROSCOPE 3
-#define THERMOMETER 4
-#define GPS 5
-#define COMPASS 6
-#define ALTIMITER 7
-#define INFRARED 8
-#define LIGHT 9
-#define NINEDOF 10
-#define FAKE 99
-#define NONE 100
+#define ADC 0
+#define ACCELEROMETER 10
+#define GYROSCOPE 20
+#define THERMOMETER 30
+#define GPS 40
+#define COMPASS 50
+#define ALTIMITER 60
+#define INFRARED 70
+#define LIGHT 80
+#define NINEDOF 90
+#define FAKE 100
+#define NONE 110
 
 #include <QObject>
 #include <QVector>
@@ -145,6 +146,20 @@ public:
     const QVector <QVector <qint32> > &get_data_raw() const { return globalRawData; }
 
     /////////////////////////////////////////////////////////////////////
+    /// \brief get_device_id
+    /// \return deviceID.value(sensorType)
+    /// Get current device ID.
+    /////////////////////////////////////////////////////////////////////
+    char get_device_id() const { return deviceID.value(sensorType); }
+
+    /////////////////////////////////////////////////////////////////////
+    /// \brief get_device_name
+    /// \return deviceName.value(sensorType)
+    /// Get the name of the device.
+    /////////////////////////////////////////////////////////////////////
+    QString get_device_name() const { return deviceName.value(sensorType); }
+
+    /////////////////////////////////////////////////////////////////////
     /// \brief get_light_sensor
     /// \return lightsensor
     /// Returns the light sensor device pointer
@@ -198,6 +213,20 @@ public:
     void set_conversion_flag(bool convert){ convertDataFlag = convert; }
 
     /////////////////////////////////////////////////////////////////////
+    /// \brief set_device_ID
+    /// \param device_id
+    /// Set device ID.
+    /////////////////////////////////////////////////////////////////////
+    void set_device_id(char device_id);
+
+    /////////////////////////////////////////////////////////////////////
+    /// \brief set_device_name
+    /// \param device_name
+    /// Set the name of the device.
+    /////////////////////////////////////////////////////////////////////
+    void set_device_name(QString device_name);
+
+    /////////////////////////////////////////////////////////////////////
     /// \brief set_number_samples
     /// \param num_samples
     /// Sets the number of samples to take, if value is 0, free run
@@ -210,7 +239,7 @@ public:
     /// \param sample
     /// Sets the sample period for the devices
     /////////////////////////////////////////////////////////////////////
-    void set_sample_period(const quint32 sample){ samplePeriod = sample; }
+    void set_sample_period(const quint16 sample);
 
 signals:
     /////////////////////////////////////////////////////////////////////
@@ -224,6 +253,12 @@ signals:
     /// Emitted when the raw data is ready for processing
     /////////////////////////////////////////////////////////////////////
     void raw_data_ready(const QVector < QVector<qint32> > &);
+
+    /////////////////////////////////////////////////////////////////////
+    /// \brief sample_period_update
+    /// Send sample update to devices
+    /////////////////////////////////////////////////////////////////////
+    void sample_period_update(quint16);
 
 public slots:
     /////////////////////////////////////////////////////////////////////
@@ -260,6 +295,8 @@ private:
     QTimer *timer;  // Used to trigger the fake sensor
     bool convertDataFlag;   // Flag to run conversion on incoming data
     qint32 numSamples;
+    QMap <char,QString> deviceName;
+    QMap <char,char> deviceID;
 
 private:
     /////////////////////////////////////////////////////////////////////

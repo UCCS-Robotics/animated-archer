@@ -99,7 +99,7 @@ void LightSensor::connected()
     mDevice.startProgram(prog, "light:prog");
 }
 
-void LightSensor::on_change_time(qint32 time){
+void LightSensor::program(quint16 delay_ms){
     // Data for the commands that are about to be written.
     const uint8_t powerOnData[2] = {
         TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,  // Register
@@ -131,7 +131,7 @@ void LightSensor::on_change_time(qint32 time){
 
     // Set the program ID and update interval.
     prog.setProgramID(0);
-    prog.setRunInterval(time); // 25ms or 40Hz
+    prog.setRunInterval(delay_ms); // 25ms or 40Hz
 
     // Make sure the program is valid.
     Q_ASSERT(prog.isValid());

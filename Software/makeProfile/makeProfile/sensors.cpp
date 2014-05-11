@@ -64,6 +64,8 @@ void sensors::select_ads1015(){
     set_sensor_type(ADC);
     connect(adcsensor, SIGNAL(sensorData(QDateTime,QVector<qint32>)),
             this, SLOT(on_record_sensor(QDateTime,QVector<qint32>)));
+    connect(this, SIGNAL(sample_period_update(quint16)), adcsensor,
+            SLOT(program(qint16)));
 }
 
 void sensors::select_infrared(){
@@ -79,6 +81,8 @@ void sensors::select_light_sensor(){
     set_sensor_type(LIGHT);
     connect(lightsensor, SIGNAL(sensorData(QDateTime,QVector<qint32>)),
             this, SLOT(on_record_sensor(QDateTime,QVector<qint32>)));
+    connect(this, SIGNAL(sample_period_update(quint16)), lightsensor,
+            SLOT(program(quint16)));
 }
 
 void sensors::select_ls20031(){
@@ -147,12 +151,14 @@ void sensors::stop_all_sensors(){
     case LIGHT:
         disconnect(lightsensor, SIGNAL(sensorData(QDateTime,QVector<qint32>)),
                    this, SLOT(on_record_sensor(QDateTime,QVector<qint32>)));
+        disconnect(this, SIGNAL(sample_period_update(quint16)), lightsensor, SLOT(program(quint16)));
         delete lightsensor;
         set_sensor_type(NONE);
         break;
     case ADC:
         disconnect(adcsensor, SIGNAL(sensorData(QDateTime,QVector<qint32>)),
                    this, SLOT(on_record_sensor(QDateTime,QVector<qint32>)));
+        disconnect(this, SIGNAL(sample_period_update(quint16)), adcsensor, SLOT(program(quint16)));
         delete adcsensor;
         set_sensor_type(NONE);
         break;
@@ -183,6 +189,29 @@ void sensors::switch_sensor(){
 /********************************************************************
  * Setters                                                          *
  *******************************************************************/
+
+void sensors::set_device_id(char device_id){
+    if(deviceID.contains(sensorType))
+        deviceID.remove(sensorType);
+    deviceID.insert(sensorType,device_id);
+}
+
+void sensors::set_device_name(QString device_name){
+    if(deviceName.contains(sensorType))
+        deviceID.remove(sensorType);
+    deviceName.insert(sensorType, device_name);
+}
+
+void sensors::set_sample_period(const quint16 sample){
+    samplePeriod = sample;
+    if(sensorType == FAKE){
+        if(timer->isActive())
+            timer->stop();
+        timer->start(samplePeriod);
+    } else {
+        emit sample_period_update(sample);
+    }
+}
 
 void sensors::set_sensor_type(uchar sensor_type){
     sensorType = sensor_type;

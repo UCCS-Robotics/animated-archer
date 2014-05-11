@@ -32,7 +32,7 @@ public:
     /// \param yData
     /// Add datapoints to the given graph. Vectors must be same length.
     /////////////////////////////////////////////////////////////////////
-    void add_graph_data(QString graph_name, const QVector<double> &xData,
+    void add_graph_data(char graph_name, const QVector<double> &xData,
                         const QVector<double> &yData);
 
     /////////////////////////////////////////////////////////////////////
@@ -43,7 +43,7 @@ public:
     /// Override method for the vector form of this method. Simply adds
     /// a single datapoint to the given graph.
     /////////////////////////////////////////////////////////////////////
-    void add_graph_data(QString graph_name, double xData, double yData);
+    void add_graph_data(char graph_name, double xData, double yData);
 
     /////////////////////////////////////////////////////////////////////
     /// \brief clear_all_graph_data
@@ -56,7 +56,7 @@ public:
     /// \param graph_name
     /// Clears all of the data relating to the given graph.
     /////////////////////////////////////////////////////////////////////
-    void clear_graph_data(QString graph_name);
+    void clear_graph_data(char graph_name);
 
     /////////////////////////////////////////////////////////////////////
     /// \brief create_graph
@@ -64,14 +64,14 @@ public:
     /// This is an abstraction of the QCustomPlot add graph, such that
     /// the developer needs not keep track of each graph.
     /////////////////////////////////////////////////////////////////////
-    void create_graph(QString graph_name);
+    void create_graph(char graph_name);
 
     /////////////////////////////////////////////////////////////////////
     /// \brief hide_graph
     /// \param graph_name
     /// Hide the given graph from the plot
     /////////////////////////////////////////////////////////////////////
-    void hide_graph(QString graph_name);
+    void hide_graph(char graph_name);
 
     /////////////////////////////////////////////////////////////////////
     /// \brief rescale_all
@@ -90,7 +90,7 @@ public:
     /// \param graph_name
     /// Remove the user indicated graph from the plot.
     /////////////////////////////////////////////////////////////////////
-    void remove_graph(QString graph_name);
+    void remove_graph(char graph_name);
 
     /////////////////////////////////////////////////////////////////////
     /// \brief reset_plot
@@ -103,7 +103,7 @@ public:
     /// \param graph_name
     /// Show the given graph on the plot.
     /////////////////////////////////////////////////////////////////////
-    void show_graph(QString graph_name);
+    void show_graph(char graph_name);
 
     /////////////////////////////////////////////////////////////////////
     /// \brief update_plot
@@ -121,7 +121,7 @@ public:
     /// \return
     /// Returns the current graph-name to graph-pointer mapping.
     /////////////////////////////////////////////////////////////////////
-    const QMap<QString, QCPGraph*> &get_used_graphs() const { return usedGraphs; }
+    const QMap<char, QCPGraph*> &get_used_graphs() const { return usedGraphs; }
 
     /////////////////////////////////////////////////////////////////////
     /// \brief get_title
@@ -177,7 +177,7 @@ public:
     /// Resets the given graph data with new data. Vectors must be same
     /// length.
     /////////////////////////////////////////////////////////////////////
-    void set_graph_data(QString graph_name, const QVector<double> &xData,
+    void set_graph_data(char graph_name, const QVector<double> &xData,
                         const QVector<double> &yData);
 
     /////////////////////////////////////////////////////////////////////
@@ -186,7 +186,7 @@ public:
     /// \param pen
     /// Set graph color.
     /////////////////////////////////////////////////////////////////////
-    void set_graph_pen(QString graph_name, QPen pen);
+    void set_graph_pen(char graph_name, QPen pen);
 
     /////////////////////////////////////////////////////////////////////
     /// \brief set_graph_name
@@ -195,7 +195,7 @@ public:
     /// Changes the displayed graph name, not the name of the graph for
     /// accessing the graph itself.
     /////////////////////////////////////////////////////////////////////
-    void set_graph_name(QString graph_name, QString new_graph_name);
+    void set_graph_name(char graph_name, QString new_graph_name);
 
     /////////////////////////////////////////////////////////////////////
     /// \brief set_number_xData_points
@@ -393,7 +393,7 @@ public slots:
     void on_title_double_click(QMouseEvent* event, QCPPlotTitle* title);
 
 private:
-    QMap<QString,QCPGraph*> usedGraphs;    // List of active graphs
+    QMap<char,QCPGraph*> usedGraphs;    // List of active graphs
     MainWindow *mainwindow;
     QCustomPlot *mainPlot, *refPlot;
     QClipboard *clipboard;
@@ -418,7 +418,7 @@ private:
     /// \param used_graphs
     /// Set the used graphs map, this will probably not see any usage
     /////////////////////////////////////////////////////////////////////
-    void set_used_graphs(const QMap<QString, QCPGraph*> &used_graphs){ usedGraphs = used_graphs; }
+    void set_used_graphs(const QMap<char, QCPGraph*> &used_graphs){ usedGraphs = used_graphs; }
 
 
     void set_yWindow_range(double minimum_value, double maximum_value);

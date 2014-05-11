@@ -19,7 +19,7 @@ Plotter::~Plotter(){
  * Helper Methods                                                   *
  *******************************************************************/
 
-void Plotter::add_graph_data(QString graph_name,
+void Plotter::add_graph_data(char graph_name,
                              const QVector<double> &xData,
                              const QVector<double> &yData){
     if(usedGraphs.contains(graph_name))
@@ -30,40 +30,45 @@ void Plotter::add_graph_data(QString graph_name,
     }
 }
 
-void Plotter::add_graph_data(QString graph_name, double xData, double yData){
+void Plotter::add_graph_data(char graph_name, double xData, double yData){
     add_graph_data(graph_name, QVector<double>() << xData, QVector<double>() << yData);
 }
 
 void Plotter::auto_find_yAxis_range(){
     QMap<double, QCPData>::const_iterator dataIterator;
-    QMapIterator <QString, QCPGraph*> graphIterator(usedGraphs);
+    QMapIterator <char, QCPGraph*> graphIterator(usedGraphs);
     bool allocated = false;
     quint32 i = 0;
     double average;
 
-    while(graphIterator.hasNext()){ // Cycle through graphs
-        graphIterator.next();
-        dataIterator = graphIterator.value()->data()->constEnd();
-        // Iterate through data for current graph from end until either beginning or
-        // number of data points has been reached, from this list find the min and max
-        // to auto set yAxis range
-        while (dataIterator != graphIterator.value()->data()->constBegin() && i < dataPoints) {
-            --dataIterator;
-            if(!allocated){
-                allocated = true;
-                minimumValue = dataIterator.value().value;
-                maximumValue = minimumValue;
+    try{
+        while(graphIterator.hasNext()){ // Cycle through graphs
+            graphIterator.next();
+            dataIterator = graphIterator.value()->data()->constEnd();
+            // Iterate through data for current graph from end until either beginning or
+            // number of data points has been reached, from this list find the min and max
+            // to auto set yAxis range
+            while (dataIterator != graphIterator.value()->data()->constBegin() && i < dataPoints) {
+                --dataIterator;
+                if(!allocated){
+                    allocated = true;
+                    minimumValue = dataIterator.value().value;
+                    maximumValue = minimumValue;
+                }
+
+                if(minimumValue > dataIterator.value().value)
+                    minimumValue = dataIterator.value().value;
+
+                if(maximumValue < dataIterator.value().value)
+                    maximumValue = dataIterator.value().value;
+
+                ++i;
             }
-
-            if(minimumValue > dataIterator.value().value)
-                minimumValue = dataIterator.value().value;
-
-            if(maximumValue < dataIterator.value().value)
-                maximumValue = dataIterator.value().value;
-
-            ++i;
         }
+    } catch (...) {
+        return;
     }
+
     average = (minimumValue + maximumValue)/2;
     minimumValue -= average*0.1;
     maximumValue += average*0.1;
@@ -71,40 +76,41 @@ void Plotter::auto_find_yAxis_range(){
 }
 
 void Plotter::clear_all_graph_data(){
-    QMapIterator <QString, QCPGraph*> i(usedGraphs);
+    QMapIterator <char, QCPGraph*> i(usedGraphs);
     while(i.hasNext()){
         i.next();
         i.value()->clearData();
     }
 }
 
-void Plotter::clear_graph_data(QString graph_name){
+void Plotter::clear_graph_data(char graph_name){
     if(usedGraphs.contains(graph_name)){
         usedGraphs.value(graph_name)->clearData();
     }
 }
 
-void Plotter::create_graph(QString graph_name){
+void Plotter::create_graph(char graph_name){
     usedGraphs.insert(graph_name,mainPlot->addGraph());
     usedGraphs.value(graph_name)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 5));
     usedGraphs.value(graph_name)->setLineStyle(QCPGraph::lsLine);
-    usedGraphs.value(graph_name)->setName(graph_name);
+    usedGraphs.value(graph_name)->setName(QString(graph_name));
 }
 
-void Plotter::hide_graph(QString graph_name){
+void Plotter::hide_graph(char graph_name){
     usedGraphs.value(graph_name)->setVisible(false);
     usedGraphs.value(graph_name)->removeFromLegend();
 }
 
 void Plotter::remove_all_graphs(){
-    QMapIterator <QString, QCPGraph*> i(usedGraphs);
+    QMapIterator <char, QCPGraph*> i(usedGraphs);
     while(i.hasNext()){
         i.next();
         mainPlot->removeGraph(i.value());
+        usedGraphs.remove(i.key());
     }
 }
 
-void Plotter::remove_graph(QString graph_name){
+void Plotter::remove_graph(char graph_name){
     if(usedGraphs.contains(graph_name)){
         mainPlot->removeGraph(usedGraphs.value(graph_name));
         usedGraphs.remove(graph_name);
@@ -116,7 +122,7 @@ void Plotter::reset_plot(){
     mainPlot->replot();
 }
 
-void Plotter::show_graph(QString graph_name){
+void Plotter::show_graph(char graph_name){
     usedGraphs.value(graph_name)->setVisible(true);
     usedGraphs.value(graph_name)->addToLegend();
 }
@@ -125,17 +131,17 @@ void Plotter::show_graph(QString graph_name){
  * Setters                                                          *
  *******************************************************************/
 
-void Plotter::set_graph_data(QString graph_name, const QVector<double> &xData, const QVector<double> &yData){
+void Plotter::set_graph_data(char graph_name, const QVector<double> &xData, const QVector<double> &yData){
     if(usedGraphs.contains(graph_name))
         usedGraphs.value(graph_name)->setData(xData,yData);
 }
 
-void Plotter::set_graph_pen(QString graph_name, QPen pen){
+void Plotter::set_graph_pen(char graph_name, QPen pen){
     if(usedGraphs.contains(graph_name))
         usedGraphs.value(graph_name)->setPen(pen);
 }
 
-void Plotter::set_graph_name(QString graph_name, QString new_graph_name){
+void Plotter::set_graph_name(char graph_name, QString new_graph_name){
     if(usedGraphs.contains(graph_name))
         usedGraphs.value(graph_name)->setName(new_graph_name);
 }
@@ -234,7 +240,7 @@ void Plotter::on_context_menu_request(QPoint pos){
 void Plotter::on_copy_graph_data(){
     QString output; // String to be placed in clipboard
     QCPGraph * selected;    // Used to determine which graph is selected
-    QMapIterator <QString, QCPGraph*> i(usedGraphs);
+    QMapIterator <char, QCPGraph*> i(usedGraphs);
     QMap<double, QCPData>::const_iterator dataIterator;
 
     // Make darn sure that exactly one graph is selected

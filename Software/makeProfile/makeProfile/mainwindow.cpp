@@ -132,15 +132,16 @@ void MainWindow::stop_all_sensors(){
 void MainWindow::on_actionUS_Sensor_triggered()
 {
     device->select_ads1015();
+    device->set_device_name("UltraSonic");
     mainPlot->remove_all_graphs();
-    mainPlot->create_graph("UltraSonic 1");
-    mainPlot->create_graph("UltraSonic 2");
-    mainPlot->create_graph("UltraSonic 3");
-    mainPlot->create_graph("UltraSonic 4");
-    mainPlot->set_graph_pen("UltraSonic 1", QPen(Qt::blue));
-    mainPlot->set_graph_pen("UltraSonic 1", QPen(Qt::red));
-    mainPlot->set_graph_pen("UltraSonic 1", QPen(Qt::green));
-    mainPlot->set_graph_pen("UltraSonic 1", QPen(Qt::yellow));
+    for(int i = 1; i < 5; i++){
+        mainPlot->create_graph(ADC+i);
+        mainPlot->set_graph_name(ADC+i,device->get_device_name()+ " "+QString::number(i));
+    }
+    mainPlot->set_graph_pen(ADC+1, QPen(Qt::blue));
+    mainPlot->set_graph_pen(ADC+2, QPen(Qt::red));
+    mainPlot->set_graph_pen(ADC+3, QPen(Qt::green));
+    mainPlot->set_graph_pen(ADC+4, QPen(Qt::yellow));
     usedAxes = device->get_used_graphs();
     sensor = (char)device->get_sensor_type();
     sensor_switched();
@@ -215,17 +216,19 @@ void MainWindow::on_actionIR_Sensor_triggered()
 
 void MainWindow::on_actionFake_Sensor_triggered()
 {
-    device->set_sample_period(500);
     device->select_sudo_sensor();
+    device->set_sample_period(100);
+    device->set_device_name("Sudo");
+    device->set_device_id(0);
     mainPlot->remove_all_graphs();
-    mainPlot->create_graph("Fake 1");
-    mainPlot->create_graph("Fake 2");
-    mainPlot->create_graph("Fake 3");
-    mainPlot->create_graph("Fake 4");
-    mainPlot->set_graph_pen("Fake 1", QPen(Qt::blue));
-    mainPlot->set_graph_pen("Fake 2", QPen(Qt::red));
-    mainPlot->set_graph_pen("Fake 3", QPen(Qt::green));
-    mainPlot->set_graph_pen("Fake 4", QPen(Qt::yellow));
+    for(int i = 1; i < 5; i++){
+        mainPlot->create_graph(FAKE+i);
+        mainPlot->set_graph_name(FAKE+i,device->get_device_name()+ " "+QString::number(i));
+    }
+    mainPlot->set_graph_pen(FAKE+1, QPen(Qt::blue));
+    mainPlot->set_graph_pen(FAKE+2, QPen(Qt::red));
+    mainPlot->set_graph_pen(FAKE+3, QPen(Qt::green));
+    mainPlot->set_graph_pen(FAKE+4, QPen(Qt::yellow));
     usedAxes = device->get_used_graphs();
     sensor = device->get_sensor_type();
     if(device->get_sensor_type() != FAKE){
@@ -246,9 +249,12 @@ void MainWindow::on_actionFake_Sensor_triggered()
 void MainWindow::on_actionLight_Sensor_triggered()
 {
     device->select_light_sensor();
+    device->set_device_name("Light");
     mainPlot->remove_all_graphs();
-    mainPlot->create_graph("Light 1");
-    mainPlot->set_graph_pen("Light 1", QPen(Qt::blue));
+
+    mainPlot->create_graph(LIGHT+1);
+    mainPlot->set_graph_name(LIGHT+1,"Light 1");
+    mainPlot->set_graph_pen(LIGHT+1, QPen(Qt::blue));
     usedAxes = device->get_used_graphs();
     sensor = device->get_sensor_type();
     if(device->get_sensor_type() != LIGHT){
@@ -409,9 +415,9 @@ void MainWindow::sampleData(){
 }
 
 void MainWindow::plotSensor(const QVector <QVector <qint32> > &data){
-    mainPlot->add_graph_data("Fake 1", data.at(data.size()-1).at(0)/1000.0, data.at(data.size()-1).at(1));
+    mainPlot->add_graph_data(FAKE+1, data.at(data.size()-1).at(0)/1000.0, data.at(data.size()-1).at(1));
     mainPlot->set_xWindow_range(10);
-    mainPlot->set_number_xData_points(10/0.5);
+    mainPlot->set_number_xData_points(10/0.1);
     mainPlot->set_auto_range_scale(true);
     mainPlot->update_plot();
 //    double et = data.at(data.size()-1).at(0)/1000.0;
@@ -534,8 +540,6 @@ void MainWindow::on_deviceError(const QString& msg)
 void MainWindow::plot(){
     autoScale = true;  // Autoscale plot
     currentTime = QDateTime::currentDateTime();
-
-    connect(ui->mainPlot, SIGNAL(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*)));
 
     // connect slot that shows a message in the status bar when a graph is clicked:
     connect(ui->mainPlot, SIGNAL(plottableClick(QCPAbstractPlottable*,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*)));
@@ -803,80 +807,40 @@ void MainWindow::on_spinBoxSpeed_valueChanged(int arg1)
 // Hide/show axis1
 void MainWindow::on_checkBoxData1_clicked(bool checked)
 {
-    if(checked){
-        ui->mainPlot->graph(0)->setVisible(true);
-        ui->mainPlot->graph(0)->addToLegend();
-    } else {
-        ui->mainPlot->graph(0)->setVisible(false);
-        ui->mainPlot->graph(0)->removeFromLegend();
-    }
-    ui->mainPlot->replot();
+//    if(checked){
+//        ui->mainPlot->graph(0)->setVisible(true);
+//        ui->mainPlot->graph(0)->addToLegend();
+//    } else {
+//        ui->mainPlot->graph(0)->setVisible(false);
+//        ui->mainPlot->graph(0)->removeFromLegend();
+//    }
+//    ui->mainPlot->replot();
 }
 
 // Hide/show axis2
 void MainWindow::on_checkBoxData2_clicked(bool checked)
 {
-    if(checked){
-        ui->mainPlot->graph(1)->setVisible(true);
-        ui->mainPlot->graph(1)->addToLegend();
-    } else {
-        ui->mainPlot->graph(1)->setVisible(false);
-        ui->mainPlot->graph(1)->removeFromLegend();
-    }
-    ui->mainPlot->replot();
+//    if(checked){
+//        ui->mainPlot->graph(1)->setVisible(true);
+//        ui->mainPlot->graph(1)->addToLegend();
+//    } else {
+//        ui->mainPlot->graph(1)->setVisible(false);
+//        ui->mainPlot->graph(1)->removeFromLegend();
+//    }
+//    ui->mainPlot->replot();
 }
 
 // Hide/show axis3
 void MainWindow::on_checkBoxData3_clicked(bool checked)
 {
-    if(checked){
-        ui->mainPlot->graph(2)->setVisible(true);
-        ui->mainPlot->graph(2)->addToLegend();
-    } else {
-        ui->mainPlot->graph(2)->setVisible(false);
-        ui->mainPlot->graph(2)->removeFromLegend();
-    }
-    ui->mainPlot->replot();
-}
-
-// Rename title
-void MainWindow::titleDoubleClick(QMouseEvent* event, QCPPlotTitle* title)
-{
-}
-
-// Rename axis
-void MainWindow::axisLabelDoubleClick(QCPAxis *axis, QCPAxis::SelectablePart part)
-{
-}
-
-// Allow renaming of the legend/checkboxes on the side
-void MainWindow::legendDoubleClick(QCPLegend *legend, QCPAbstractLegendItem *item)
-{
-}
-
-void MainWindow::selectionChanged()
-{
-}
-
-void MainWindow::mousePress()
-{
-}
-
-void MainWindow::mouseWheel()
-{
-}
-
-// The is where all of the context menues go, use slots to make the data processing more efficient
-void MainWindow::contextMenuRequest(QPoint pos){
-}
-
-// Slot for moving the legend
-void MainWindow::moveLegend(){
-}
-
-// Show status
-void MainWindow::graphClicked(QCPAbstractPlottable *plottable)
-{
+//    if(checked){
+//        ui->mainPlot->graph(2)->setVisible(true);
+//        ui->mainPlot->graph(2)->addToLegend();
+//    } else {
+//        ui->mainPlot->graph(2)->setVisible(false);
+//        ui->mainPlot->graph(2)->removeFromLegend();
+//    }
+//    ui->mainPlot->replot();
 }
 
 // Copy graph data to clipboard in a format compatable with pasting into spreadsheets
@@ -887,6 +851,10 @@ void MainWindow::graphCopy(){
 void MainWindow::windowCopy()
 {
     ui->statusBar->showMessage(QString("Current window copied to clipboard."),2000);
+}
+
+void MainWindow::graphClicked(QCPAbstractPlottable *plottable){
+
 }
 
 void MainWindow::on_pushButtonRecord_clicked()
