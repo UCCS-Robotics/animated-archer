@@ -4,9 +4,12 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QDateTime>
+#include <QClipboard>
+#include <QList>
 #include "qcustomplot.h"
 #include "device.h"
 #include "sensorthread.h"
+#include "fakesensor.h"
 
 #define ULTRASONIC 1
 #define ACCELEROMETER 2
@@ -16,6 +19,8 @@
 #define COMPASS 6
 #define ALTIMITER 7
 #define INFRARED 8
+#define LIGHT 9
+#define FAKE 99
 
 namespace Ui {
 class MainWindow;
@@ -32,10 +37,20 @@ public:
 private:
     void sensor_switched();
     void plot();
-    void set_xscreen();
+    void set_xscreen(const QVector <double>&);
+    void set_xscreen(const QVector <double>&,const QVector <double>&);
+    void set_xscreen(const QVector <double>&,const QVector <double>&,const QVector <double>&);
+    QCPRange find_axis_range(QVector<double>);
+    QCPRange find_axis_range(const QVector<double>&,const QVector<double>&);
+    QCPRange find_axis_range(const QVector<double>&,const QVector<double>&,const QVector<double>&);
+    QCPRange find_axis_range_logic(const QCPRange&,const QCPRange&);
+    void stop_all_sensors();
+    void sampleData();
 
 signals:
     void send_timer();
+    void send_disconnect();
+    void send_connect();
 
 private slots:
 
@@ -68,6 +83,15 @@ private slots:
     void on_actionConnect_Device_triggered();
 
     void processLightSensorData(const QDateTime&, quint16);
+
+    void processAxisX(const QDateTime&, quint16);
+
+    void recordSensor(const QDateTime&, quint16, quint16, quint16);
+
+    void recordSensor(const QDateTime&, quint16, quint16);
+
+    void recordSensor(const QDateTime&, quint16);
+
     void on_deviceError(const QString& msg);
 
     void on_pushButtonPauseResume_clicked(bool checked);
@@ -82,17 +106,52 @@ private slots:
 
     void on_horizontalSliderSpeed_valueChanged(int value);
 
+    void on_spinBoxTime_valueChanged(int arg1);
+
+    void on_spinBoxData_valueChanged(int arg1);
+
+    void on_spinBoxSpeed_valueChanged(int arg1);
+
+    void on_checkBoxData1_clicked(bool checked);
+
+    void on_checkBoxData2_clicked(bool checked);
+
+    void on_checkBoxData3_clicked(bool checked);
+
+    void on_actionFake_Sensor_triggered();
+
+    void titleDoubleClick(QMouseEvent *event, QCPPlotTitle *title);
+    void axisLabelDoubleClick(QCPAxis* axis, QCPAxis::SelectablePart part);
+    void legendDoubleClick(QCPLegend* legend, QCPAbstractLegendItem* item);
+    void selectionChanged();
+    void mousePress();
+    void mouseWheel();
+    void contextMenuRequest(QPoint pos);
+    void moveLegend();
+    void graphClicked(QCPAbstractPlottable *plottable);
+    void graphCopy();
+    void windowCopy();
+
+    void on_actionLight_Sensor_triggered();
+
+    void on_pushButtonRecord_clicked();
+
+    void on_pushButtonSample_clicked();
+
 private:
     Ui::MainWindow *ui;
-    char sensor;
+    char sensor, usedAxes;
     Device *usb;
     QTimer *timer;
     SensorThread *lightsensor;
+    FakeSensor *fakesensor;
     int time;
-    QDateTime currentTime;
-    QVector <double> lsg0, globalData;
-    qint64 elapsedTime, pauseTime;
-    bool timerStopped, autoScale;
+    QDateTime currentTime, currTime, nextTime;
+    QVector <double> lsg0, lsg1, lsg2, globalData, globalData1, globalData2, globalData3;
+    qint64 elapsedTime, pauseTime, numSamples;
+    bool timerStopped, autoScale, limitSamples;
+    QCustomPlot *refPlot;
+    QClipboard *clipboard;
 };
 
 #endif // MAINWINDOW_H

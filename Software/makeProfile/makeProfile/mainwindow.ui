@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>857</width>
-    <height>762</height>
+    <width>837</width>
+    <height>728</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -69,7 +69,7 @@
                  <item row="0" column="1">
                   <widget class="QLabel" name="label_2">
                    <property name="text">
-                    <string>Sample Delay</string>
+                    <string>Sample Speed</string>
                    </property>
                   </widget>
                  </item>
@@ -103,7 +103,7 @@
                  <item>
                   <widget class="QPushButton" name="pushButtonPauseResume">
                    <property name="text">
-                    <string>Pause/Resume</string>
+                    <string>Pause</string>
                    </property>
                    <property name="checkable">
                     <bool>true</bool>
@@ -113,7 +113,7 @@
                  <item>
                   <widget class="QPushButton" name="pushButtonRecord">
                    <property name="text">
-                    <string>Record</string>
+                    <string>Save</string>
                    </property>
                   </widget>
                  </item>
@@ -278,7 +278,7 @@
          <widget class="QFrame" name="frame_2">
           <property name="maximumSize">
            <size>
-            <width>306</width>
+            <width>310</width>
             <height>103</height>
            </size>
           </property>
@@ -402,14 +402,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLCDNumber" name="lcdNumberScale">
-                 <property name="maximumSize">
-                  <size>
-                   <width>64</width>
-                   <height>24</height>
-                  </size>
-                 </property>
-                </widget>
+                <widget class="QSpinBox" name="spinBoxData"/>
                </item>
               </layout>
              </item>
@@ -437,18 +430,24 @@
                    <height>24</height>
                   </size>
                  </property>
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>100</number>
+                 </property>
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QLCDNumber" name="lcdNumberTScale">
-                 <property name="maximumSize">
-                  <size>
-                   <width>64</width>
-                   <height>24</height>
-                  </size>
+                <widget class="QSpinBox" name="spinBoxTime">
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>100</number>
                  </property>
                 </widget>
                </item>
@@ -484,12 +483,15 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLCDNumber" name="lcdNumberSpeed">
-                 <property name="maximumSize">
-                  <size>
-                   <width>64</width>
-                   <height>24</height>
-                  </size>
+                <widget class="QSpinBox" name="spinBoxSpeed">
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <number>1000</number>
+                 </property>
+                 <property name="singleStep">
+                  <number>10</number>
                  </property>
                 </widget>
                </item>
@@ -530,7 +532,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>857</width>
+     <width>837</width>
      <height>25</height>
     </rect>
    </property>
@@ -545,6 +547,8 @@
     <addaction name="actionCompass"/>
     <addaction name="actionAltimiter"/>
     <addaction name="actionIR_Sensor"/>
+    <addaction name="actionFake_Sensor"/>
+    <addaction name="actionLight_Sensor"/>
    </widget>
    <widget class="QMenu" name="menuInterface_2">
     <property name="title">
@@ -563,7 +567,6 @@
     <property name="title">
      <string>Document</string>
     </property>
-    <addaction name="actionWrite_to_PDF"/>
    </widget>
    <addaction name="menuInterface"/>
    <addaction name="menuInterface_2"/>
@@ -649,6 +652,16 @@
     <string>Open Command Window</string>
    </property>
   </action>
+  <action name="actionFake_Sensor">
+   <property name="text">
+    <string>Imaginary Sensor</string>
+   </property>
+  </action>
+  <action name="actionLight_Sensor">
+   <property name="text">
+    <string>Light Sensor</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -660,38 +673,5 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections>
-  <connection>
-   <sender>horizontalSliderScale</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>lcdNumberScale</receiver>
-   <slot>display(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>648</x>
-     <y>292</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>787</x>
-     <y>292</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>horizontalSliderTScale</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>lcdNumberTScale</receiver>
-   <slot>display(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>649</x>
-     <y>384</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>789</x>
-     <y>384</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

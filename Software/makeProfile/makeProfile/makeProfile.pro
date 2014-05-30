@@ -24,6 +24,7 @@ SOURCES += main.cpp\
     crc32.c \
     devicethread.cpp \
     devicetransaction.cpp \
+    fakesensor.cpp \
     burstprogram.cpp
 
 HEADERS  += mainwindow.h \
@@ -36,8 +37,7 @@ HEADERS  += mainwindow.h \
     crc32.h \
     devicethread.h \
     devicetransaction.h \
+    fakesensor.h /
     burstprogram.h
 
 FORMS    += mainwindow.ui
-
-LIBS += -lusb-1.0
