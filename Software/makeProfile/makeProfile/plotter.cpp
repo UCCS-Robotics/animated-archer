@@ -173,9 +173,10 @@ void Plotter::set_xWindow_range(quint32 data_points){
     dataIterator = usedGraphs.begin().value()->data()->constEnd();
     --dataIterator;
     double lower, upper;
-
-    lower = (double)dataIterator.key()-(double)dataPoints;
-    upper = dataIterator.key();
+    if(usedGraphs.begin().value()->data()->constBegin() != usedGraphs.begin().value()->data()->constEnd()){
+        lower = (double)dataIterator.key()-(double)dataPoints;
+        upper = dataIterator.key();
+    }
     mainPlot->xAxis->setRange(lower,//Max - #data points (min)
                               upper); //Max
 }

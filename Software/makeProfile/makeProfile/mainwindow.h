@@ -132,6 +132,7 @@ private:
     QClipboard *clipboard;
     sensors *device;
     Plotter *mainPlot;
+    QMap <char, QPen> colors;
 };
 
 #endif // MAINWINDOW_H

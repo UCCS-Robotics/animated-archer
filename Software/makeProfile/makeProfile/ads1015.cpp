@@ -134,7 +134,7 @@ QByteArray ADS1015::writeRegister(uint8_t reg, uint16_t value)
     return QByteArray((char*)data, 3);
 }
 
-void ADS1015::program(qint16 delay_ms)
+void ADS1015::program(quint16 delay_ms)
 {
     // The burst program we are about to describe.
     BurstProgram prog;

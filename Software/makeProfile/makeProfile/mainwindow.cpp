@@ -24,6 +24,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButtonRecord->setDisabled(true);
     QWidget::setWindowTitle("Live Data");
 
+    colors.insert(0,QPen(Qt::blue));
+    colors.insert(1,QPen(Qt::red));
+    colors.insert(2,QPen(Qt::green));
+    colors.insert(3,QPen(Qt::gray));
+    colors.insert(4,QPen(Qt::black));
+    colors.insert(5,QPen(Qt::cyan));
+    colors.insert(6,QPen(Qt::magenta));
+    colors.insert(7,QPen(Qt::darkYellow));
+    colors.insert(8,QPen(Qt::darkCyan));
+
     // Initialize pointers
     timer = new QTimer(this);
     device = new sensors(this);
@@ -53,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(device,SIGNAL(raw_data_ready(QVector<QVector<qint32> >)),this,SLOT(plotSensor(QVector<QVector<qint32> >)));
 
     mainPlot->clear_all_graph_data();
+    on_actionFake_Sensor_triggered();
 }
 
 MainWindow::~MainWindow()
@@ -221,14 +232,11 @@ void MainWindow::on_actionFake_Sensor_triggered()
     device->set_device_name("Sudo");
     device->set_device_id(0);
     mainPlot->remove_all_graphs();
-    for(int i = 1; i < 5; i++){
+    for(int i = 1; i < 10; i++){
         mainPlot->create_graph(FAKE+i);
         mainPlot->set_graph_name(FAKE+i,device->get_device_name()+ " "+QString::number(i));
+        mainPlot->set_graph_pen(FAKE+i,colors.value(i-1));
     }
-    mainPlot->set_graph_pen(FAKE+1, QPen(Qt::blue));
-    mainPlot->set_graph_pen(FAKE+2, QPen(Qt::red));
-    mainPlot->set_graph_pen(FAKE+3, QPen(Qt::green));
-    mainPlot->set_graph_pen(FAKE+4, QPen(Qt::yellow));
     usedAxes = device->get_used_graphs();
     sensor = device->get_sensor_type();
     if(device->get_sensor_type() != FAKE){
@@ -415,7 +423,10 @@ void MainWindow::sampleData(){
 }
 
 void MainWindow::plotSensor(const QVector <QVector <qint32> > &data){
-    mainPlot->add_graph_data(FAKE+1, data.at(data.size()-1).at(0)/1000.0, data.at(data.size()-1).at(1));
+    //mainPlot->add_graph_data(FAKE+1, data.at(data.size()-1).at(0)/1000.0, data.at(data.size()-1).at(1));
+    for(int i = 1; i < data.at(data.size()-1).size(); i++){
+        mainPlot->add_graph_data(FAKE+i, data.at(data.size()-1).at(0)/1000.0, data.at(data.size()-1).at(i));
+    }
     mainPlot->set_xWindow_range(10);
     mainPlot->set_number_xData_points(10/0.1);
     mainPlot->set_auto_range_scale(true);

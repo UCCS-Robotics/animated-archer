@@ -11,6 +11,7 @@ sensors::sensors(MainWindow *mainwindowin, QObject *parent) :
     elapsedTime = 0;    // Always start record time at 0ms
     connect(usb, SIGNAL(deviceError(QString)),
             this, SLOT(on_device_error(QString)));  // Relay error
+    set_sensor_type(NONE);
     set_sample_period(500); // Temporary, remove later
     set_number_samples(0);
     set_conversion_flag(false);
@@ -65,7 +66,7 @@ void sensors::select_ads1015(){
     connect(adcsensor, SIGNAL(sensorData(QDateTime,QVector<qint32>)),
             this, SLOT(on_record_sensor(QDateTime,QVector<qint32>)));
     connect(this, SIGNAL(sample_period_update(quint16)), adcsensor,
-            SLOT(program(qint16)));
+            SLOT(program(quint16)));
 }
 
 void sensors::select_infrared(){

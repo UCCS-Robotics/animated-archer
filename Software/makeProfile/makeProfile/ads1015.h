@@ -25,7 +25,7 @@ signals:
     void sensorData(const QDateTime &,const QVector<qint32>& data);  // format: [stamp.ms,value,channel]
 
 public slots:
-    void program(qint16 delay_ms);
+    void program(quint16 delay_ms);
 
 private:
     QByteArray writeRegister(uint8_t reg, uint16_t value);
