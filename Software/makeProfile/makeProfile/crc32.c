@@ -22,13 +22,13 @@ void crc32_init(void)
 	}
 }
 
-uint32_t crc32(uint8_t *buf, size_t len)
+uint32_t pcrc32(uint8_t *buf, size_t len)
 {
 	size_t i;
 	uint32_t c = 0xFFFFFFFF;
 
-	for(i = 0; i < len; i++)
-		c = crc32_table[(c ^ buf[i]) & 0xFF] ^ (c >> 8);
+    for(i = 0; i < len; i++)
+        c = crc32_table[(c ^ buf[i]) & 0xFF] ^ (c >> 8);
 
 	return c ^ 0xFFFFFFFF;
 }

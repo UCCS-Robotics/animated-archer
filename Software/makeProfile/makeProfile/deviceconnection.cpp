@@ -122,7 +122,7 @@ void DeviceConnection::update()
     Packet *p = (Packet*)buffer;
 
     // Calculate the CRC-32 checksum of the packet.
-    uint32_t crc = crc32(buffer, PACKET_SIZE - 4);
+    uint32_t crc = pcrc32(buffer, PACKET_SIZE - 4);
 
     // Validate the CRC-32 checksum. If it's invalid, ignore the packet.
     if(p->crc != crc)
@@ -402,7 +402,7 @@ void DeviceConnection::write(quint8 addr, const QByteArray& _data,
         p->data[i] = 0;
 
     // Calculate the CRC-32 checksum.
-    p->crc = crc32(buffer, PACKET_SIZE - 4);
+    p->crc = pcrc32(buffer, PACKET_SIZE - 4);
 
     // Create a transaction for this device.
     DeviceTransactionPtr trans(new DeviceTransaction(
@@ -474,7 +474,7 @@ void DeviceConnection::read(quint8 addr, quint64 sz,
         p->data[i] = 0;
 
     // Calculate the CRC-32 checksum.
-    p->crc = crc32(buffer, PACKET_SIZE - 4);
+    p->crc = pcrc32(buffer, PACKET_SIZE - 4);
 
     // Create a transaction for this device.
     DeviceTransactionPtr trans(new DeviceTransaction(
@@ -535,7 +535,7 @@ void DeviceConnection::program(const BurstProgram &prog,
     memcpy(p->data, prog.data().constData(), 48);
 
     // Calculate the CRC-32 checksum.
-    p->crc = crc32(buffer, PACKET_SIZE - 4);
+    p->crc = pcrc32(buffer, PACKET_SIZE - 4);
 
     // Create a transaction for this device.
     DeviceTransactionPtr trans(new DeviceTransaction(

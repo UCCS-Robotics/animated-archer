@@ -20,10 +20,10 @@ void crc32_init(void);
  * @arg len Length (in bytes) of the data to checksum.
  * @returns The CRC32 checksum of the data.
  */
-uint32_t crc32(uint8_t *buf, size_t len);
-
-#ifdef __cplusplus
+uint32_t pcrc32(uint8_t *buf, size_t len);
 }
+#ifdef __cplusplus
+
 #endif
 
 #endif // _FreEZUSB__crc32_h_
